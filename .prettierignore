@@ -1,1 +1,14 @@
 /src/routeTree.gen.ts
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+prettier.config.js
+dist
+build
+coverage
+.next
+.turbo
+.tanstack
+.vite
+node_modules
