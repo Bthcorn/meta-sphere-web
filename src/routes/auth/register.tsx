@@ -34,7 +34,7 @@ function RegisterPage() {
     },
   });
 
-  const onSubmit = ({ profilePicture, ...rest }: RegisterFormValues) => {
+  const onSubmit = ({ profilePicture, ...rest }: Omit<RegisterFormValues, 'confirmPassword'>) => {
     registerMutation.mutate(
       { ...rest, profilePicture: profilePicture || undefined },
       { onSuccess: () => navigate({ to: '/auth/login' }) }

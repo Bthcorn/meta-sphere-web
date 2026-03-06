@@ -18,7 +18,7 @@ export function useAuth() {
     mutationFn: (data: LoginRequest) => authApi.login(data),
     onSuccess: ({ access_token, user }) => {
       setAuth(access_token, user);
-      router.navigate({ to: '/' });
+      router.navigate({ to: '/space' });
     },
   });
 
