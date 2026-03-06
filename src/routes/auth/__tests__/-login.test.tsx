@@ -14,6 +14,7 @@ const mockLogin = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (opts: unknown) => opts,
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ navigate: mockNavigate }),
   Link: ({ children, to }: { children: React.ReactNode; to: string }) =>
     React.createElement('a', { href: to }, children),
 }));
@@ -72,10 +73,10 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith(
-        { username: 'johndoe', password: 'SecurePassword123!' },
-        expect.anything()
-      );
+      expect(mockLogin).toHaveBeenCalledWith({
+        username: 'johndoe',
+        password: 'SecurePassword123!',
+      });
     });
   });
 

@@ -13,6 +13,7 @@ const mockRegister = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (opts: unknown) => opts,
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ navigate: vi.fn() }),
   Link: ({ children, to }: { children: React.ReactNode; to: string }) =>
     React.createElement('a', { href: to }, children),
 }));
