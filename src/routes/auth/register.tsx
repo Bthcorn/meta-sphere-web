@@ -50,17 +50,19 @@ function RegisterPage() {
   const apiError = registerMutation.error instanceof Error ? registerMutation.error.message : null;
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-950 px-4'>
+    <div className='flex min-h-screen items-center justify-center bg-background px-4'>
       <div className='w-full max-w-md space-y-6'>
         <div className='text-center'>
-          <h1 className='text-3xl font-bold tracking-tight text-white'>Metasphere</h1>
-          <p className='mt-1 text-sm text-gray-400'>Your virtual co-working space</p>
+          <h1 className='text-3xl font-bold tracking-tight text-foreground'>Metasphere</h1>
+          <p className='mt-1 text-sm text-muted-foreground'>Your virtual co-working space</p>
         </div>
 
-        <Card className='border-gray-800 bg-gray-900 text-white shadow-2xl'>
+        <Card className='border-border bg-card text-card-foreground shadow-2xl'>
           <CardHeader className='space-y-1 pb-4'>
-            <CardTitle className='text-xl font-semibold text-white'>Create an account</CardTitle>
-            <CardDescription className='text-gray-400'>
+            <CardTitle className='text-xl font-semibold text-card-foreground'>
+              Create an account
+            </CardTitle>
+            <CardDescription className='text-muted-foreground'>
               Join Metasphere and start collaborating
             </CardDescription>
           </CardHeader>
@@ -69,7 +71,7 @@ function RegisterPage() {
             <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-1.5'>
-                  <Label htmlFor='firstName' className='text-gray-300'>
+                  <Label htmlFor='firstName' className='text-foreground'>
                     First name
                   </Label>
                   <Input
@@ -77,16 +79,16 @@ function RegisterPage() {
                     type='text'
                     placeholder='John'
                     autoComplete='given-name'
-                    className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                    className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                     {...register('firstName')}
                   />
                   {errors.firstName && (
-                    <p className='text-xs text-red-400'>{errors.firstName.message}</p>
+                    <p className='text-xs text-destructive'>{errors.firstName.message}</p>
                   )}
                 </div>
 
                 <div className='space-y-1.5'>
-                  <Label htmlFor='lastName' className='text-gray-300'>
+                  <Label htmlFor='lastName' className='text-foreground'>
                     Last name
                   </Label>
                   <Input
@@ -94,17 +96,17 @@ function RegisterPage() {
                     type='text'
                     placeholder='Doe'
                     autoComplete='family-name'
-                    className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                    className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                     {...register('lastName')}
                   />
                   {errors.lastName && (
-                    <p className='text-xs text-red-400'>{errors.lastName.message}</p>
+                    <p className='text-xs text-destructive'>{errors.lastName.message}</p>
                   )}
                 </div>
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='username' className='text-gray-300'>
+                <Label htmlFor='username' className='text-foreground'>
                   Username
                 </Label>
                 <Input
@@ -112,16 +114,16 @@ function RegisterPage() {
                   type='text'
                   placeholder='johndoe'
                   autoComplete='username'
-                  className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                  className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                   {...register('username')}
                 />
                 {errors.username && (
-                  <p className='text-xs text-red-400'>{errors.username.message}</p>
+                  <p className='text-xs text-destructive'>{errors.username.message}</p>
                 )}
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='email' className='text-gray-300'>
+                <Label htmlFor='email' className='text-foreground'>
                   Email
                 </Label>
                 <Input
@@ -129,14 +131,14 @@ function RegisterPage() {
                   type='email'
                   placeholder='you@example.com'
                   autoComplete='email'
-                  className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                  className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                   {...register('email')}
                 />
-                {errors.email && <p className='text-xs text-red-400'>{errors.email.message}</p>}
+                {errors.email && <p className='text-xs text-destructive'>{errors.email.message}</p>}
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='password' className='text-gray-300'>
+                <Label htmlFor='password' className='text-foreground'>
                   Password
                 </Label>
                 <Input
@@ -144,16 +146,16 @@ function RegisterPage() {
                   type='password'
                   placeholder='••••••••'
                   autoComplete='new-password'
-                  className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                  className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                   {...register('password')}
                 />
                 {errors.password && (
-                  <p className='text-xs text-red-400'>{errors.password.message}</p>
+                  <p className='text-xs text-destructive'>{errors.password.message}</p>
                 )}
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='confirmPassword' className='text-gray-300'>
+                <Label htmlFor='confirmPassword' className='text-foreground'>
                   Confirm password
                 </Label>
                 <Input
@@ -161,32 +163,32 @@ function RegisterPage() {
                   type='password'
                   placeholder='••••••••'
                   autoComplete='new-password'
-                  className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                  className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (
-                  <p className='text-xs text-red-400'>{errors.confirmPassword.message}</p>
+                  <p className='text-xs text-destructive'>{errors.confirmPassword.message}</p>
                 )}
               </div>
 
               <div className='space-y-1.5'>
-                <Label htmlFor='profilePicture' className='text-gray-300'>
-                  Profile picture URL <span className='text-gray-500'>(optional)</span>
+                <Label htmlFor='profilePicture' className='text-foreground'>
+                  Profile picture URL <span className='text-muted-foreground'>(optional)</span>
                 </Label>
                 <Input
                   id='profilePicture'
                   type='url'
                   placeholder='https://example.com/avatar.jpg'
-                  className='border-gray-700 bg-gray-800 text-white placeholder:text-gray-500 focus-visible:ring-blue-500'
+                  className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring'
                   {...register('profilePicture')}
                 />
                 {errors.profilePicture && (
-                  <p className='text-xs text-red-400'>{errors.profilePicture.message}</p>
+                  <p className='text-xs text-destructive'>{errors.profilePicture.message}</p>
                 )}
               </div>
 
               {apiError && (
-                <div className='rounded-md bg-red-900/40 px-3 py-2 text-sm text-red-400 ring-1 ring-red-800'>
+                <div className='rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive ring-1 ring-destructive/30'>
                   {apiError}
                 </div>
               )}
@@ -194,7 +196,7 @@ function RegisterPage() {
               <Button
                 type='submit'
                 disabled={registerMutation.isPending}
-                className='w-full block items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors'
+                className='w-full block items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors'
               >
                 {registerMutation.isPending ? (
                   <>
@@ -209,11 +211,11 @@ function RegisterPage() {
               </Button>
             </form>
 
-            <p className='mt-5 text-center text-sm text-gray-500'>
+            <p className='mt-5 text-center text-sm text-muted-foreground'>
               Already have an account?{' '}
               <Link
                 to='/auth/login'
-                className='font-medium text-blue-400 hover:text-blue-300 transition-colors'
+                className='font-medium text-primary hover:text-primary/80 transition-colors'
               >
                 Sign in
               </Link>
