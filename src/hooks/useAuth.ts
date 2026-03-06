@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router';
 
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/auth.store';
+import { useAvatarStore } from '@/store/avatar.store';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
 
 export function useAuth() {
@@ -18,7 +19,8 @@ export function useAuth() {
     mutationFn: (data: LoginRequest) => authApi.login(data),
     onSuccess: ({ access_token, user }) => {
       setAuth(access_token, user);
-      router.navigate({ to: '/space' });
+      const hasAvatar = useAvatarStore.getState().avatarId !== null;
+      router.navigate({ to: hasAvatar ? '/space' : '/user/avatar-select' });
     },
   });
 
