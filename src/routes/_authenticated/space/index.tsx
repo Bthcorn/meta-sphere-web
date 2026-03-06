@@ -11,10 +11,10 @@ import { Library } from './-components/library';
 import { Chilling } from './-components/chilling';
 import { Private } from './-components/private';
 
-import { Player } from '../../components/player';
-import { Crosshair } from '../../components/ui/crosshair';
+import { Player } from '../../../components/player';
+import { Crosshair } from '../../../components/ui/crosshair';
 
-export const Route = createFileRoute('/space/')({
+export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
 });
 

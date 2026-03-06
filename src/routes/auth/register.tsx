@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { authApi } from '@/api/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { registerSchema, type RegisterFormValues } from '@/schemas/auth.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 export const Route = createFileRoute('/auth/register')({
   component: RegisterPage,
@@ -15,6 +15,7 @@ export const Route = createFileRoute('/auth/register')({
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { register: registerMutation } = useAuth();
 
   const {
     register,
@@ -33,33 +34,14 @@ function RegisterPage() {
     },
   });
 
-  const { mutate, isPending, error } = useMutation({
-    mutationFn: ({
-      username,
-      password,
-      email,
-      firstName,
-      lastName,
-      profilePicture,
-    }: RegisterFormValues) =>
-      authApi.register({
-        username,
-        password,
-        email,
-        firstName,
-        lastName,
-        profilePicture: profilePicture || undefined,
-      }),
-    onSuccess: () => {
-      navigate({ to: '/auth/login' });
-    },
-  });
-
-  const onSubmit = (data: RegisterFormValues) => {
-    mutate(data);
+  const onSubmit = ({ profilePicture, ...rest }: RegisterFormValues) => {
+    registerMutation.mutate(
+      { ...rest, profilePicture: profilePicture || undefined },
+      { onSuccess: () => navigate({ to: '/auth/login' }) }
+    );
   };
 
-  const apiError = error instanceof Error ? error.message : null;
+  const apiError = registerMutation.error instanceof Error ? registerMutation.error.message : null;
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-950 px-4'>
@@ -205,10 +187,19 @@ function RegisterPage() {
 
               <Button
                 type='submit'
-                disabled={isPending}
-                className='w-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors'
+                disabled={registerMutation.isPending}
+                className='w-full block items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors'
               >
-                {isPending ? 'Creating account...' : 'Create account'}
+                {registerMutation.isPending ? (
+                  <>
+                    <Loader2 className='size-4 animate-spin' />
+                    <span>Creating account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create account</span>
+                  </>
+                )}
               </Button>
             </form>
 

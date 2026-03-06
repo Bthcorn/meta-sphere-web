@@ -1,9 +1,7 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { authApi } from '@/api/auth';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuth } from '@/hooks/useAuth';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +13,7 @@ export const Route = createFileRoute('/auth/login')({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { login } = useAuth();
 
   const {
     register,
@@ -30,19 +27,11 @@ function LoginPage() {
     },
   });
 
-  const { mutate, isPending, error } = useMutation({
-    mutationFn: authApi.login,
-    onSuccess: ({ access_token, user }) => {
-      setAuth(access_token, user);
-      navigate({ to: '/space' });
-    },
-  });
-
   const onSubmit = (data: LoginFormValues) => {
-    mutate(data);
+    login.mutate(data);
   };
 
-  const apiError = error instanceof Error ? error.message : null;
+  const apiError = login.error instanceof Error ? login.error.message : null;
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-950 px-4'>
@@ -104,10 +93,10 @@ function LoginPage() {
 
               <Button
                 type='submit'
-                disabled={isPending}
+                disabled={login.isPending}
                 className='w-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors'
               >
-                {isPending ? 'Signing in...' : 'Sign in'}
+                {login.isPending ? 'Signing in...' : 'Sign in'}
               </Button>
             </form>
 
