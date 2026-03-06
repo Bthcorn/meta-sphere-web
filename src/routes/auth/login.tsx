@@ -41,7 +41,7 @@ function LoginPage() {
           <p className='mt-1 text-sm text-muted-foreground'>Your virtual co-working space</p>
         </div>
 
-        <Card className='border-border bg-card text-card-foreground shadow-2xl'>
+        <Card className='border-border bg-card text-card-foreground shadow-xl'>
           <CardHeader className='space-y-1 pb-4'>
             <CardTitle className='text-xl font-semibold text-card-foreground'>
               Welcome back

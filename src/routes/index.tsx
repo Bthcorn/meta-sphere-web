@@ -76,7 +76,7 @@ function LandingPage() {
           </div>
 
           {/* Right: 3D scene */}
-          <div className='w-full lg:flex-1 h-72 sm:h-96 lg:h-[520px]'>
+          <div className='w-full lg:flex-1 h-72 sm:h-96 lg:h-130'>
             <MetaSphere3D />
           </div>
         </section>

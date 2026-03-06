@@ -14,7 +14,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthenticatedAvatarSelectRouteImport } from './routes/_authenticated/avatar-select'
 import { Route as AuthenticatedSpaceIndexRouteImport } from './routes/_authenticated/space/index'
+import { Route as AuthenticatedUserAvatarSelectRouteImport } from './routes/_authenticated/user/avatar-select'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -40,47 +42,81 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAvatarSelectRoute =
+  AuthenticatedAvatarSelectRouteImport.update({
+    id: '/avatar-select',
+    path: '/avatar-select',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSpaceIndexRoute = AuthenticatedSpaceIndexRouteImport.update({
   id: '/space/',
   path: '/space/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedUserAvatarSelectRoute =
+  AuthenticatedUserAvatarSelectRouteImport.update({
+    id: '/user/avatar-select',
+    path: '/user/avatar-select',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/avatar-select': typeof AuthenticatedAvatarSelectRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/': typeof AuthIndexRoute
+  '/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/space/': typeof AuthenticatedSpaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/avatar-select': typeof AuthenticatedAvatarSelectRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth': typeof AuthIndexRoute
+  '/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/space': typeof AuthenticatedSpaceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_authenticated/avatar-select': typeof AuthenticatedAvatarSelectRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/': typeof AuthIndexRoute
+  '/_authenticated/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/_authenticated/space/': typeof AuthenticatedSpaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/login' | '/auth/register' | '/auth/' | '/space/'
+  fullPaths:
+    | '/'
+    | '/avatar-select'
+    | '/auth/login'
+    | '/auth/register'
+    | '/auth/'
+    | '/user/avatar-select'
+    | '/space/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/register' | '/auth' | '/space'
+  to:
+    | '/'
+    | '/avatar-select'
+    | '/auth/login'
+    | '/auth/register'
+    | '/auth'
+    | '/user/avatar-select'
+    | '/space'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated/avatar-select'
     | '/auth/login'
     | '/auth/register'
     | '/auth/'
+    | '/_authenticated/user/avatar-select'
     | '/_authenticated/space/'
   fileRoutesById: FileRoutesById
 }
@@ -129,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/avatar-select': {
+      id: '/_authenticated/avatar-select'
+      path: '/avatar-select'
+      fullPath: '/avatar-select'
+      preLoaderRoute: typeof AuthenticatedAvatarSelectRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/space/': {
       id: '/_authenticated/space/'
       path: '/space'
@@ -136,14 +179,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSpaceIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/user/avatar-select': {
+      id: '/_authenticated/user/avatar-select'
+      path: '/user/avatar-select'
+      fullPath: '/user/avatar-select'
+      preLoaderRoute: typeof AuthenticatedUserAvatarSelectRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAvatarSelectRoute: typeof AuthenticatedAvatarSelectRoute
+  AuthenticatedUserAvatarSelectRoute: typeof AuthenticatedUserAvatarSelectRoute
   AuthenticatedSpaceIndexRoute: typeof AuthenticatedSpaceIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAvatarSelectRoute: AuthenticatedAvatarSelectRoute,
+  AuthenticatedUserAvatarSelectRoute: AuthenticatedUserAvatarSelectRoute,
   AuthenticatedSpaceIndexRoute: AuthenticatedSpaceIndexRoute,
 }
 
