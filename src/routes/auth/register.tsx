@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import type { RegisterRequest } from '@/types/auth';
 
 export const Route = createFileRoute('/auth/register')({
   component: RegisterPage,
@@ -34,11 +35,16 @@ function RegisterPage() {
     },
   });
 
-  const onSubmit = ({ profilePicture, ...rest }: Omit<RegisterFormValues, 'confirmPassword'>) => {
-    registerMutation.mutate(
-      { ...rest, profilePicture: profilePicture || undefined },
-      { onSuccess: () => navigate({ to: '/auth/login' }) }
-    );
+  const onSubmit = (registerData: RegisterFormValues) => {
+    const registerRequest: RegisterRequest = {
+      firstName: registerData.firstName,
+      lastName: registerData.lastName,
+      username: registerData.username,
+      email: registerData.email,
+      password: registerData.password,
+      profilePicture: registerData.profilePicture || undefined,
+    };
+    registerMutation.mutate(registerRequest, { onSuccess: () => navigate({ to: '/auth/login' }) });
   };
 
   const apiError = registerMutation.error instanceof Error ? registerMutation.error.message : null;
