@@ -4,6 +4,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/render-utils';
 import { useAuthStore } from '@/store/auth.store';
+import { useAvatarStore } from '@/store/avatar.store';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -36,6 +37,7 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthStore.getState().clearAuth();
+    useAvatarStore.getState().clearAvatar();
   });
 
   it('renders heading, fields, submit button and register link', () => {
@@ -80,7 +82,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('stores auth and navigates to /space on successful login', async () => {
+  it('stores auth and navigates to /user/avatar-select when no avatar is set', async () => {
     const user = userEvent.setup();
     mockLogin.mockResolvedValueOnce({
       access_token: 'token123',
@@ -95,6 +97,24 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(useAuthStore.getState().token).toBe('token123');
       expect(useAuthStore.getState().user?.username).toBe('johndoe');
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/user/avatar-select' });
+    });
+  });
+
+  it('navigates to /space when avatar is already set', async () => {
+    useAvatarStore.getState().setAvatar('violet');
+    const user = userEvent.setup();
+    mockLogin.mockResolvedValueOnce({
+      access_token: 'token123',
+      user: { id: '1', username: 'johndoe' },
+    });
+    renderWithProviders(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/username/i), 'johndoe');
+    await user.type(screen.getByLabelText(/password/i), 'SecurePassword123!');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith({ to: '/space' });
     });
   });
