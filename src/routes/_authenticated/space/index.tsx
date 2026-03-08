@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useAuthStore } from '@/store/auth.store';
+import { useSpaceEntry } from '@/hooks/useSpaceEntry';
 import { Canvas } from '@react-three/fiber';
 // Removed OrbitControls from import!
 import { Sky } from '@react-three/drei';
@@ -11,8 +12,9 @@ import { Library } from './-components/library';
 import { Chilling } from './-components/chilling';
 import { Private } from './-components/private';
 
-import { Player } from '../../../components/player';
-import { Crosshair } from '../../../components/ui/crosshair';
+import { Player } from '@/components/space/Player';
+import { RemoteAvatars } from '@/components/users/RemoteAvatars';
+import { Crosshair } from '@/components/space/Crosshair';
 
 export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
@@ -20,6 +22,8 @@ export const Route = createFileRoute('/_authenticated/space/')({
 
 function SpaceIndex() {
   const user = useAuthStore((s) => s.user);
+
+  useSpaceEntry();
 
   return (
     <div className='w-screen h-screen bg-black'>
@@ -60,6 +64,7 @@ function SpaceIndex() {
         <Private position={[30, 0, -30]} />
         <Chilling position={[0, 0, -20]} />
 
+        <RemoteAvatars />
         <Player />
       </Canvas>
     </div>
