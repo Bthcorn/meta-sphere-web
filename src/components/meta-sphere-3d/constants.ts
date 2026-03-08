@@ -13,7 +13,7 @@ export interface AvatarConfig {
   rotationY: number;
 }
 
-const AVATAR_COLORS = [PRIMARY, ACCENT, GLOW, '#818cf8', '#6366f1'];
+export const AVATAR_COLORS = [PRIMARY, ACCENT, GLOW, '#818cf8', '#6366f1'];
 const AVATAR_COUNT = 5;
 const AVATAR_RADIUS = 1.8;
 const AVATAR_Y = 0.9;
