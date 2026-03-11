@@ -2,14 +2,13 @@ import type { ThreeElements } from '@react-three/fiber';
 import { Chair } from './chair';
 import { Table } from './table';
 import { Laptop } from './laptop';
+import { Screen } from './screen'; // 1. Import your new Screen!
 
 type MeetingFurnitureProps = ThreeElements['group'];
 
 export function MeetingFurniture(props: MeetingFurnitureProps) {
-  const s = 0.15; // Base Asset Scale
+  const s = 0.15;
 
-  // These specific offsets re-center the raw hardcoded coordinates
-  // so the entire furniture cluster pivots cleanly around local (0,0,0)
   const centerX = -0.13;
   const centerZ = -3.81;
 
@@ -20,8 +19,11 @@ export function MeetingFurniture(props: MeetingFurnitureProps) {
   ];
 
   return (
-    // By spreading {...props} here, the parent can move/scale the whole group!
     <group {...props}>
+      {/* --- NEW PRESENTATION SCREEN --- */}
+      {/* Mounted perfectly on the back wall */}
+      <Screen position={[0, 4.5, -8.5]} />
+
       {/* Table */}
       <Table position={[centerX, 0, centerZ]} scale={s} />
 

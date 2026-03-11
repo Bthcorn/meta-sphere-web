@@ -14,16 +14,13 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
   const glassThickness = 0.2;
   const wallHeight = 7;
 
-  // Main Entrance Math
   const mainDoorWidth = 3;
   const mainDoorHeight = 6;
   const frontSideWidth = (width - mainDoorWidth) / 2;
 
-  // Corridor Math
   const corridorWidth = 3;
   const roomWidth = (width - corridorWidth) / 2;
 
-  // Asymmetrical Glass Door Math
   const roomDoorWidth = 2.5;
   const roomDoorHeight = 6;
 
@@ -31,12 +28,10 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
   const frontSegmentDepth = doorDistanceFromFront;
   const backSegmentDepth = depth - roomDoorWidth - frontSegmentDepth;
 
-  // Calculating exact Z coordinates
   const frontSegmentZ = depth / 2 - frontSegmentDepth / 2;
   const doorZ = depth / 2 - frontSegmentDepth - roomDoorWidth / 2;
   const backSegmentZ = -depth / 2 + backSegmentDepth / 2;
 
-  // Flattened X offsets for the glass walls
   const leftGlassX = -corridorWidth / 2;
   const rightGlassX = corridorWidth / 2;
 
@@ -62,7 +57,6 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
         Meeting Area
       </Text>
 
-      {/* --- ALL ARCHITECTURE & WALLS --- */}
       <RigidBody type='fixed' colliders='cuboid'>
         {/* Floor */}
         <mesh position={[0, 0.05, 0]}>
@@ -70,11 +64,13 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           <meshStandardMaterial color='#3b82f6' />
         </mesh>
 
-        {/* Outer Solid Walls */}
+        {/* --- BACK WALL (Restored to solid) --- */}
         <mesh position={[0, wallHeight / 2, -depth / 2]}>
           <boxGeometry args={[width, wallHeight, wallThickness]} />
           {solidWallMaterial}
         </mesh>
+
+        {/* Outer Solid Side Walls */}
         <mesh position={[-width / 2, wallHeight / 2, 0]}>
           <boxGeometry args={[wallThickness, wallHeight, depth]} />
           {solidWallMaterial}
@@ -84,7 +80,7 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {solidWallMaterial}
         </mesh>
 
-        {/* Front Solid Wall (Group flattened so Rapier reads it correctly) */}
+        {/* Front Solid Wall */}
         <mesh position={[-(width / 2) + frontSideWidth / 2, wallHeight / 2, depth / 2]}>
           <boxGeometry args={[frontSideWidth, wallHeight, wallThickness]} />
           {solidWallMaterial}
@@ -98,7 +94,7 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {solidWallMaterial}
         </mesh>
 
-        {/* Inner Glass Wall Left (Group flattened) */}
+        {/* Inner Glass Wall Left */}
         <mesh position={[leftGlassX, wallHeight / 2, backSegmentZ]}>
           <boxGeometry args={[glassThickness, wallHeight, backSegmentDepth]} />
           {glassMaterial}
@@ -112,7 +108,7 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {glassMaterial}
         </mesh>
 
-        {/* Inner Glass Wall Right (Group flattened) */}
+        {/* Inner Glass Wall Right */}
         <mesh position={[rightGlassX, wallHeight / 2, backSegmentZ]}>
           <boxGeometry args={[glassThickness, wallHeight, backSegmentDepth]} />
           {glassMaterial}
@@ -127,7 +123,6 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
         </mesh>
       </RigidBody>
 
-      {/* --- CORRIDOR LABELS --- */}
       <Text
         position={[leftGlassX + 0.2, roomDoorHeight + 0.4, doorZ]}
         fontSize={0.8}
@@ -145,7 +140,6 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
         Room B
       </Text>
 
-      {/* --- THE INTERIORS --- */}
       <MeetingRoom
         position={[-(corridorWidth / 2 + roomWidth / 2), 0, 0]}
         width={roomWidth}
