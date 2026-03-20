@@ -13,7 +13,6 @@ import { Chilling } from './-components/chilling';
 import { Private } from './-components/private';
 
 import { Player } from '@/components/space/Player';
-import { RemoteAvatars } from '@/components/users/RemoteAvatars';
 import { Crosshair } from '@/components/space/Crosshair';
 
 export const Route = createFileRoute('/_authenticated/space/')({
@@ -96,15 +95,6 @@ function SpaceIndex() {
           {/* Player spawn shifted left to match the Spawn room's new X position */}
           <Player position={[-10, 3, 3.75]} />
         </Physics>
-        <Spawn position={[0, 0, 40]} />
-        <Library position={[-30, 0, 0]} />
-        <Lecture position={[30, 0, 0]} />
-        <Meeting position={[-30, 0, -30]} />
-        <Private position={[30, 0, -30]} />
-        <Chilling position={[0, 0, -20]} />
-
-        <RemoteAvatars />
-        <Player />
       </Canvas>
     </div>
   );

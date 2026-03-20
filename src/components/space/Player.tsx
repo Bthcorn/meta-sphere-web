@@ -7,7 +7,7 @@ import {
   PointerLockControls,
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { useSpacePresenceStore } from '@/store/space-presence.store';
+import { RigidBody, RapierRigidBody, CapsuleCollider } from '@react-three/rapier';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'w', 'W'] },
@@ -16,69 +16,84 @@ const keyboardMap = [
   { name: 'right', keys: ['ArrowRight', 'd', 'D'] },
 ];
 
-const frontVector = new THREE.Vector3();
-const sideVector = new THREE.Vector3();
-const direction = new THREE.Vector3();
+type PlayerProps = {
+  position?: [number, number, number];
+};
 
-function PlayerMesh() {
-  const playerRef = useRef<THREE.Mesh>(null);
+function PlayerMesh({ position = [-22.5, 5, 15] }: PlayerProps) {
+  const rbRef = useRef<RapierRigidBody>(null);
   const [, getKeys] = useKeyboardControls();
-  const hasEmittedInitial = useRef(false);
 
-  useFrame((state, delta) => {
-    if (playerRef.current && !hasEmittedInitial.current) {
-      hasEmittedInitial.current = true;
-      useSpacePresenceStore.getState().updatePosition({
-        x: playerRef.current.position.x,
-        y: playerRef.current.position.y,
-        z: playerRef.current.position.z,
-      });
-    }
+  // Create vectors outside the loop to prevent memory leaks
+  const direction = new THREE.Vector3();
+  const frontVector = new THREE.Vector3();
+  const sideVector = new THREE.Vector3();
+  const euler = new THREE.Euler();
+
+  useFrame((state) => {
+    if (!rbRef.current) return;
+
     const { forward, backward, left, right } = getKeys();
+    const speed = 8;
 
-    const speed = 15;
+    frontVector.set(0, 0, (backward ? 1 : 0) - (forward ? 1 : 0));
+    sideVector.set((left ? 1 : 0) - (right ? 1 : 0), 0, 0);
+    direction.subVectors(frontVector, sideVector);
 
-    if (playerRef.current) {
-      state.camera.getWorldDirection(frontVector);
-      frontVector.y = 0;
-      frontVector.normalize();
+    // CRITICAL FIX: Only normalize and apply camera rotation if we are actually trying to move!
+    // This entirely prevents the NaN crash that freezes your character on the floor.
+    if (direction.lengthSq() > 0) {
+      direction.normalize().multiplyScalar(speed);
 
-      sideVector.copy(frontVector).cross(state.camera.up).normalize();
-
+      // Extract ONLY the Y-axis rotation (yaw) from the camera.
+      // This stops you from driving yourself into the ground if you look at the floor.
+      euler.setFromQuaternion(state.camera.quaternion, 'YXZ');
+      direction.applyEuler(new THREE.Euler(0, euler.y, 0));
+    } else {
+      // If no keys are pressed, force the vector safely to zero
       direction.set(0, 0, 0);
-      if (forward) direction.add(frontVector);
-      if (backward) direction.sub(frontVector);
-      if (right) direction.add(sideVector);
-      if (left) direction.sub(sideVector);
-
-      if (direction.lengthSq() > 0) {
-        direction.normalize().multiplyScalar(speed * delta);
-        playerRef.current.position.add(direction);
-      }
-      if (forward || backward || left || right) {
-        useSpacePresenceStore.getState().updatePosition({
-          x: playerRef.current.position.x,
-          y: playerRef.current.position.y,
-          z: playerRef.current.position.z,
-        });
-      }
     }
+
+    const linvel = rbRef.current.linvel();
+
+    // Apply the velocity securely
+    rbRef.current.setLinvel(
+      {
+        x: direction.x,
+        y: linvel.y, // Always keep the physics engine's gravity intact
+        z: direction.z,
+      },
+      true
+    );
   });
 
   return (
-    <mesh ref={playerRef} position={[0, 1.5, 40]}>
-      <PerspectiveCamera makeDefault position={[0, 0.8, 0]} fov={60} near={0.6} />
-      <PointerLockControls />
-      <capsuleGeometry args={[0.5, 1, 4, 16]} />
-      <meshStandardMaterial color='#ec4899' />
-    </mesh>
+    <RigidBody
+      ref={rbRef}
+      position={position}
+      colliders={false}
+      type='dynamic'
+      enabledRotations={[false, false, false]}
+      friction={0}
+      restitution={0}
+      canSleep={false}
+    >
+      <CapsuleCollider args={[0.5, 0.5]} />
+
+      <mesh>
+        <PerspectiveCamera makeDefault position={[0, 0.8, 0]} fov={60} near={0.6} />
+        <PointerLockControls />
+        <capsuleGeometry args={[0.5, 1, 4, 16]} />
+        <meshStandardMaterial color='#ec4899' />
+      </mesh>
+    </RigidBody>
   );
 }
 
-export function Player() {
+export function Player({ position }: PlayerProps) {
   return (
     <KeyboardControls map={keyboardMap}>
-      <PlayerMesh />
+      <PlayerMesh position={position} />
     </KeyboardControls>
   );
 }
