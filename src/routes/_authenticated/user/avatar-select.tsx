@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
@@ -373,8 +373,14 @@ function AvatarSelectPage() {
 
   return (
     <div className='flex min-h-screen flex-col bg-background text-foreground'>
-      <header className='border-b border-border px-8 py-4'>
+      <header className='flex items-center justify-between border-b border-border px-8 py-4'>
         <h1 className='text-lg font-semibold tracking-tight'>Metasphere</h1>
+        <Link
+          to='/'
+          className='text-sm text-muted-foreground transition-colors hover:text-foreground'
+        >
+          Home
+        </Link>
       </header>
 
       <main className='flex flex-1 flex-col items-center justify-center gap-10 px-6 py-12 lg:flex-row lg:gap-16'>

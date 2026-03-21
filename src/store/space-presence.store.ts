@@ -11,6 +11,8 @@ interface SpacePresenceState {
   removeUser: (userId: string) => void;
   updateUserPosition: (user: UserStatePayload) => void;
   updatePosition: (position: Position) => void;
+  /** Clear presence + emit throttle when leaving /space or swapping socket. */
+  resetPresenceSession: () => void;
 }
 
 let lastEmitTime = 0;
@@ -18,30 +20,38 @@ let lastEmitTime = 0;
 export const useSpacePresenceStore = create<SpacePresenceState>()((set) => ({
   users: {},
 
+  resetPresenceSession: () => {
+    lastEmitTime = 0;
+    set({ users: {} });
+  },
+
   setUsersFromSnapshot: (users: UserStatePayload[]) => {
     const map = users.reduce<Record<string, UserStatePayload>>((acc, u) => {
-      acc[u.userId] = u;
+      const id = String(u.userId);
+      acc[id] = { ...u, userId: id };
       return acc;
     }, {});
     set({ users: map });
   },
 
   addUser: (user: UserStatePayload) =>
-    set((state) => ({
-      users: { ...state.users, [user.userId]: user },
-    })),
+    set((state) => {
+      const id = String(user.userId);
+      return { users: { ...state.users, [id]: { ...user, userId: id } } };
+    }),
 
   removeUser: (userId: string) =>
     set((state) => {
       const rest = { ...state.users };
-      delete rest[userId];
+      delete rest[String(userId)];
       return { users: rest };
     }),
 
   updateUserPosition: (user: UserStatePayload) =>
-    set((state) => ({
-      users: { ...state.users, [user.userId]: user },
-    })),
+    set((state) => {
+      const id = String(user.userId);
+      return { users: { ...state.users, [id]: { ...user, userId: id } } };
+    }),
 
   updatePosition: (position: Position) => {
     const now = Date.now();

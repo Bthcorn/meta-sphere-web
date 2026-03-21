@@ -2,7 +2,7 @@ import type { ThreeElements } from '@react-three/fiber';
 import { Chair } from './chair';
 import { Table } from './table';
 import { Laptop } from './laptop';
-import { Screen } from './screen'; // 1. Import your new Screen!
+import { Screen } from './screen';
 
 type MeetingFurnitureProps = ThreeElements['group'];
 

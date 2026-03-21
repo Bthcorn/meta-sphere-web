@@ -2,7 +2,7 @@ import type { ThreeElements } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 
-import { MeetingRoom } from './-components/meetingroom';
+import { MeetingRoom } from '@/components/space/meeting-room/meeting-room';
 
 type MeetingAreaProps = ThreeElements['group'] & {
   width: number;

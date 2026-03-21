@@ -1,5 +1,28 @@
 import { io, type Socket } from 'socket.io-client';
 
+/**
+ * Socket.IO is on the HTTP server root, not under `/api` (see REALTIME_SPEC.md).
+ * When no URL env is set, use the page origin so Vite can proxy `/socket.io` in dev.
+ */
+function socketOriginUrl(): string {
+  const explicit =
+    import.meta.env.VITE_SOCKET_URL ??
+    import.meta.env.VITE_API_ORIGIN ??
+    import.meta.env.VITE_API_URL;
+
+  if (explicit != null && String(explicit).trim() !== '') {
+    let origin = String(explicit).replace(/\/api\/?$/, '');
+    if (!origin || origin === '/') origin = 'http://localhost:3000';
+    return origin;
+  }
+
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+
+  return 'http://localhost:3000';
+}
+
 export class SocketManager {
   #socket: Socket | null = null;
 
@@ -8,10 +31,11 @@ export class SocketManager {
       return this.#socket;
     }
 
-    const url = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+    const url = socketOriginUrl();
 
     this.#socket = io(url, {
       query: { token },
+      auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
