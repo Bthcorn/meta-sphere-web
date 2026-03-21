@@ -14,10 +14,10 @@ import { Chilling } from './-components/chilling';
 import { Private } from './-components/private';
 
 import { Player } from '@/components/space/player';
-import { Crosshair } from '@/components/space/crosshair';
 import { RemotePlayers } from '@/components/space/remote-player';
 import { DEFAULT_SPAWN } from '@/components/meta-sphere-3d/constants';
 import { decodeJwtSub } from '@/lib/jwt';
+import { Crosshair } from '@/components/space/crosshair';
 
 function PresenceDebug() {
   const users = useSpacePresenceStore((s) => s.users);

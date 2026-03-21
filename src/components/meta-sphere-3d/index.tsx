@@ -2,8 +2,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { WorkTable } from './work-table';
 import { Avatar } from './avatar';
 import { FloatingScreen } from './floating-screen';
-import { Connections } from './connections';
 import { FloatingParticles } from './floating-particles';
+import { Connections } from './connections';
 import { PRIMARY, ACCENT, GLOW, AVATARS, SCREENS } from './constants';
 
 function CameraRig() {
