@@ -6,14 +6,20 @@ export const SCREEN_GLOW = '#38bdf8';
 
 // ── Avatars ────────────────────────────────────────────────────────────────
 
+// ── Avatars ────────────────────────────────────────────────────────────────
+
 export interface AvatarConfig {
   position: [number, number, number];
   color: string;
   bobOffset: number;
   rotationY: number;
+  /** Passed to PlayerAvatar for shirt color hashing; lobby uses synthetic ids. */
+  username?: string;
 }
 
-const AVATAR_COLORS = [PRIMARY, ACCENT, GLOW, '#818cf8', '#6366f1'];
+// Lobby decoration avatars use the same skin tones as the live avatars.
+const LOBBY_SKIN_TONES = ['#f5cba7', '#e8a87c', '#d4895a', '#b8694a', '#8d4a30'];
+
 const AVATAR_COUNT = 5;
 const AVATAR_RADIUS = 1.8;
 const AVATAR_Y = 0.9;
@@ -22,11 +28,17 @@ export const AVATARS: AvatarConfig[] = Array.from({ length: AVATAR_COUNT }, (_, 
   const angle = (i / AVATAR_COUNT) * Math.PI * 2;
   return {
     position: [Math.cos(angle) * AVATAR_RADIUS, AVATAR_Y, Math.sin(angle) * AVATAR_RADIUS],
-    color: AVATAR_COLORS[i],
+    color: LOBBY_SKIN_TONES[i % LOBBY_SKIN_TONES.length],
     bobOffset: (i / AVATAR_COUNT) * Math.PI * 2,
     rotationY: -angle + Math.PI,
+    username: `lobby-${i}`,
   };
 });
+
+// ── Spawn ──────────────────────────────────────────────────────────────────
+/** Default world-space spawn position — used for both the local player and
+ *  remote players whose position hasn't been received yet. */
+export const DEFAULT_SPAWN: [number, number, number] = [-10, 1, 3.75];
 
 // ── Screens ────────────────────────────────────────────────────────────────
 

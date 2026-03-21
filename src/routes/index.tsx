@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, Video, BookOpen } from 'lucide-react';
 import { MetaSphere3D } from '@/components/meta-sphere-3d';
+import { useAuth } from '@/hooks/useAuth';
+import { useAvatarStore } from '@/store/avatar.store';
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -29,6 +31,10 @@ const features = [
 ];
 
 function LandingPage() {
+  const { isAuthenticated, logout } = useAuth();
+  const hasAvatar = useAvatarStore((s) => s.avatarId !== null);
+  const appTo = hasAvatar ? '/space' : '/user/avatar-select';
+
   return (
     <div className='min-h-screen bg-background text-foreground flex flex-col'>
       {/* Nav */}
@@ -36,12 +42,30 @@ function LandingPage() {
         <div className='mx-auto max-w-6xl px-6 h-16 flex items-center justify-between'>
           <span className='text-lg font-bold tracking-tight text-foreground'>Metasphere</span>
           <nav className='flex items-center gap-3'>
-            <Button variant='ghost' size='sm' asChild>
-              <Link to='/auth/login'>Sign in</Link>
-            </Button>
-            <Button size='sm' asChild>
-              <Link to='/auth/register'>Get started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button variant='ghost' size='sm' asChild>
+                  <Link to={appTo}>Enter space</Link>
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={logout.isPending}
+                  onClick={() => logout.mutate('/')}
+                >
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant='ghost' size='sm' asChild>
+                  <Link to='/auth/login'>Sign in</Link>
+                </Button>
+                <Button size='sm' asChild>
+                  <Link to='/auth/register'>Get started</Link>
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -66,12 +90,30 @@ function LandingPage() {
             </p>
 
             <div className='mt-10 flex flex-wrap items-center gap-4'>
-              <Button size='lg' asChild>
-                <Link to='/auth/register'>Start for free</Link>
-              </Button>
-              <Button size='lg' variant='outline' asChild>
-                <Link to='/auth/login'>Sign in</Link>
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <Button size='lg' asChild>
+                    <Link to={appTo}>Enter Metasphere</Link>
+                  </Button>
+                  {/* <Button
+                    size='lg'
+                    variant='outline'
+                    disabled={logout.isPending}
+                    onClick={() => logout.mutate('/')}
+                  >
+                    Log out
+                  </Button> */}
+                </>
+              ) : (
+                <>
+                  <Button size='lg' asChild>
+                    <Link to='/auth/register'>Start for free</Link>
+                  </Button>
+                  <Button size='lg' variant='outline' asChild>
+                    <Link to='/auth/login'>Sign in</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 

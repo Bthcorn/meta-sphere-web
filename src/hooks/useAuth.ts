@@ -28,11 +28,13 @@ export function useAuth() {
     mutationFn: (data: RegisterRequest) => authApi.register(data),
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: () => authApi.logout(),
-    onSuccess: () => {
+  const logoutMutation = useMutation<void, Error, string | undefined>({
+    mutationFn: async () => {
+      await authApi.logout();
+    },
+    onSuccess: (_data, redirectTo) => {
       clearAuth();
-      router.navigate({ to: '/auth/login' });
+      router.navigate({ to: redirectTo ?? '/auth/login', replace: true });
     },
   });
 

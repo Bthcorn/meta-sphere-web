@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ThreeElements } from '@react-three/fiber';
-import { MeetingFurniture } from './meetingfurniture';
+import { MeetingFurniture } from './meeting-furniture';
 
 type MeetingRoomProps = ThreeElements['group'] & {
   width: number;
