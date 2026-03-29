@@ -56,7 +56,6 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Meeting Area
       </Text>
-
       <RigidBody type='fixed' colliders='cuboid'>
         {/* Floor */}
         <mesh position={[0, 0.05, 0]}>
@@ -122,7 +121,6 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {glassMaterial}
         </mesh>
       </RigidBody>
-
       <Text
         position={[leftGlassX + 0.2, roomDoorHeight + 0.4, doorZ]}
         fontSize={0.8}
@@ -139,16 +137,17 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Room B
       </Text>
-
       <MeetingRoom
         position={[-(corridorWidth / 2 + roomWidth / 2), 0, 0]}
         width={roomWidth}
         depth={depth}
+        zoneKey='zone_meeting_a'
       />
       <MeetingRoom
         position={[corridorWidth / 2 + roomWidth / 2, 0, 0]}
         width={roomWidth}
         depth={depth}
+        zoneKey='zone_meeting_b'
       />
     </group>
   );

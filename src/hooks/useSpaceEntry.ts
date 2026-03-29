@@ -1,15 +1,20 @@
 import { useEffect } from 'react';
-import type { Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { socketManager } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth.store';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { parseUserStatePayload } from '@/types/socket';
+import { useSessionStore } from '@/store/session.store';
 
 function attachPresenceListeners(socket: Socket) {
   const setUsersFromSnapshot = useSpacePresenceStore.getState().setUsersFromSnapshot;
   const addUser = useSpacePresenceStore.getState().addUser;
   const removeUser = useSpacePresenceStore.getState().removeUser;
   const updateUserPosition = useSpacePresenceStore.getState().updateUserPosition;
+
+  const onSessionEnded = () => {
+    useSessionStore.getState().setActiveSession(null);
+  };
 
   const onCurrentState = (...args: unknown[]) => {
     const raw = args[0];
@@ -19,25 +24,40 @@ function attachPresenceListeners(socket: Socket) {
       .filter((u): u is NonNullable<typeof u> => u != null);
     setUsersFromSnapshot(users);
   };
+
   const onUserConnected = (...args: unknown[]) => {
     const user = parseUserStatePayload(args[0]);
-    if (user) addUser(user);
+    if (user) {
+      addUser(user);
+
+      // A new participant just joined our room — immediately re-broadcast
+      // our own position so they can render our avatar without waiting for
+      // our next movement input.
+      const lastPosition = useSpacePresenceStore.getState().lastPosition;
+      if (lastPosition) {
+        socket.emit('update_position', lastPosition);
+      }
+    }
   };
+
   const onUserDisconnected = (...args: unknown[]) => {
     const id = args[0];
     if (id !== undefined && id !== null) removeUser(String(id));
   };
+
   const onUserMoved = (...args: unknown[]) => {
     const user = parseUserStatePayload(args[0]);
     if (user) updateUserPosition(user);
   };
 
+  socket.on('session:ended', onSessionEnded);
   socket.on('current_state', onCurrentState);
   socket.on('user_connected', onUserConnected);
   socket.on('user_disconnected', onUserDisconnected);
   socket.on('user_moved', onUserMoved);
 
   return () => {
+    socket.off('session:ended', onSessionEnded);
     socket.off('current_state', onCurrentState);
     socket.off('user_connected', onUserConnected);
     socket.off('user_disconnected', onUserDisconnected);

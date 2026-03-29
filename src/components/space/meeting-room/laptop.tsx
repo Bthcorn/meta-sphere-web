@@ -1,5 +1,4 @@
 import { useGLTF } from '@react-three/drei';
-import { RigidBody } from '@react-three/rapier';
 
 type LaptopProps = {
   position: [number, number, number];
@@ -41,13 +40,7 @@ export function Laptop({ position, rotation, variant, scale = 1 }: LaptopProps) 
   const l = getLaptopNodes(variant);
 
   return (
-    <RigidBody
-      type='fixed'
-      position={position}
-      rotation={rotation}
-      scale={scale} // Applied to physics
-      colliders='cuboid'
-    >
+    <group position={position} rotation={rotation} scale={scale}>
       <group scale={0.741}>
         <mesh
           geometry={nodes[l.c1].geometry}
@@ -90,6 +83,6 @@ export function Laptop({ position, rotation, variant, scale = 1 }: LaptopProps) 
           position={[-1.229, 0, 0]}
         />
       </group>
-    </RigidBody>
+    </group>
   );
 }
