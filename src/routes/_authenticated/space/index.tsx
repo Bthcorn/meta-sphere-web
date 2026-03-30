@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/store/auth.store';
-import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { useSpaceEntry } from '@/hooks/useSpaceEntry';
 import { Canvas } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
@@ -12,45 +11,44 @@ import { Lecture } from './-components/lecture';
 import { Library } from './-components/library';
 import { Chilling } from './-components/chilling';
 import { Private } from './-components/private';
+import { PresenceDebug } from './-components/presence-debug';
 
 import { Player } from '@/components/space/player';
 import { RemotePlayers } from '@/components/space/remote-player';
 import { DEFAULT_SPAWN } from '@/components/meta-sphere-3d/constants';
-import { decodeJwtSub } from '@/lib/jwt';
 import { Crosshair } from '@/components/space/crosshair';
-
-function PresenceDebug() {
-  const users = useSpacePresenceStore((s) => s.users);
-  const token = useAuthStore((s) => s.token);
-  const me = useAuthStore((s) => s.user?.id);
-  const list = Object.values(users);
-  const selfId = decodeJwtSub(token) ?? (me != null ? String(me) : '');
-  const self = list.find((u) => String(u.userId) === selfId);
-  return (
-    <div className='pointer-events-none absolute bottom-4 left-4 z-10 max-w-xs font-mono text-[11px] text-white/55'>
-      <div>Presence: {list.length} in snapshot</div>
-      <div>Your id (JWT sub): {selfId || '—'}</div>
-      <div>Your room: {self?.roomId ?? '—'}</div>
-      <p className='mt-1 leading-snug opacity-90'>
-        Others only appear if their socket is in the same room (e.g. both in{' '}
-        <code className='text-white/70'>common_area</code>, or the same session).
-      </p>
-    </div>
-  );
-}
+import { ZonePanel } from '@/components/space/zone-panel';
+import { useEffect, useState } from 'react';
+import { useSessionStore } from '@/store/session.store';
+import { ChatToggle } from '@/components/space/chat/chat-toggle';
+import { ChatPanel } from '@/components/space/chat/chat-panel';
 
 export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
 });
 
 function SpaceIndex() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const [chatOpen, setChatOpen] = useState(false);
+  const { currentZoneConfig, activeSession } = useSessionStore();
 
-  // 1. Increased campus width to 40 for much more breathing room
   const campusWidth = 40;
   const campusDepth = 30;
   const campusHeight = 7;
   const wallThickness = 1;
+
+  // Navigate to the dedicated meeting page as soon as a session becomes active
+  useEffect(() => {
+    if (activeSession) {
+      navigate({ to: '/space/meeting' });
+    }
+  }, [activeSession, navigate]);
+
+  useEffect(() => {
+    const panelOpen = !!currentZoneConfig || chatOpen;
+    if (panelOpen) document.exitPointerLock();
+  }, [currentZoneConfig, chatOpen]);
 
   useSpaceEntry();
 
@@ -74,8 +72,26 @@ function SpaceIndex() {
           <span className='text-sm font-medium'>{user.username}</span>
         </div>
       )}
+
+      <ZonePanel />
+
+      {/* Chat toggle always visible; panel slides up */}
+      <ChatToggle open={chatOpen} onToggle={() => setChatOpen((o) => !o)} />
+      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
+
       <Crosshair />
-      <Canvas>
+      <Canvas
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+          });
+          gl.domElement.addEventListener('webglcontextrestored', () => {
+            console.info('[WebGL] context restored');
+          });
+        }}
+      >
         <ambientLight intensity={0.5} />
         <directionalLight position={[20, 30, 20]} intensity={1} />
         <Sky sunPosition={[100, 20, 100]} />
@@ -111,22 +127,17 @@ function SpaceIndex() {
             </mesh>
           </RigidBody>
 
-          {/* --- LEFT WING (Now Width 20) --- */}
-          {/* X positions shifted to -10 to center them in the new wider left wing */}
+          {/* --- LEFT WING --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
-
           <Spawn position={[-10, 0, 3.75]} width={20} depth={7.5} />
           <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
 
-          {/* --- RIGHT WING (Now Width 20) --- */}
-          {/* X positions shifted to 10 to center them in the new wider right wing */}
+          {/* --- RIGHT WING --- */}
           <Lecture position={[10, 0, -10]} width={20} depth={10} />
           <Library position={[10, 0, 0]} width={20} depth={10} />
           <Private position={[10, 0, 10]} width={20} depth={10} />
 
-          {/* Player spawn shifted left to match the Spawn room's new X position */}
           <Player position={DEFAULT_SPAWN} />
-
           <RemotePlayers />
         </Physics>
       </Canvas>

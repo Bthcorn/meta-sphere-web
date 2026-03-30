@@ -6,6 +6,7 @@ const THROTTLE_MS = 50; // 20 updates/sec per spec
 
 interface SpacePresenceState {
   users: Record<string, UserStatePayload>;
+  lastPosition: Position | null;
   setUsersFromSnapshot: (users: UserStatePayload[]) => void;
   addUser: (user: UserStatePayload) => void;
   removeUser: (userId: string) => void;
@@ -19,10 +20,11 @@ let lastEmitTime = 0;
 
 export const useSpacePresenceStore = create<SpacePresenceState>()((set) => ({
   users: {},
+  lastPosition: null,
 
   resetPresenceSession: () => {
     lastEmitTime = 0;
-    set({ users: {} });
+    set({ users: {}, lastPosition: null });
   },
 
   setUsersFromSnapshot: (users: UserStatePayload[]) => {
@@ -57,6 +59,7 @@ export const useSpacePresenceStore = create<SpacePresenceState>()((set) => ({
     const now = Date.now();
     if (now - lastEmitTime < THROTTLE_MS) return;
     lastEmitTime = now;
+    set({ lastPosition: position });
     socketManager.emit('update_position', position);
   },
 }));

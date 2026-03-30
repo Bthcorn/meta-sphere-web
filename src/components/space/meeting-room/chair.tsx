@@ -28,7 +28,7 @@ export function Chair({ position, rotation, scale = 1 }: ChairProps) {
   const { nodes, materials } = useGLTF('/meeting_room.glb') as unknown as GLTFResult;
   return (
     <RigidBody
-      type='dynamic'
+      type='fixed'
       position={position}
       rotation={rotation}
       scale={scale} // Applied to physics

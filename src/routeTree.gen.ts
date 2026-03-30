@@ -16,6 +16,7 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthenticatedSpaceIndexRouteImport } from './routes/_authenticated/space/index'
 import { Route as AuthenticatedUserAvatarSelectRouteImport } from './routes/_authenticated/user/avatar-select'
+import { Route as AuthenticatedSpaceMeetingRouteImport } from './routes/_authenticated/space/meeting'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -52,12 +53,19 @@ const AuthenticatedUserAvatarSelectRoute =
     path: '/user/avatar-select',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSpaceMeetingRoute =
+  AuthenticatedSpaceMeetingRouteImport.update({
+    id: '/space/meeting',
+    path: '/space/meeting',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/': typeof AuthIndexRoute
+  '/space/meeting': typeof AuthenticatedSpaceMeetingRoute
   '/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/space/': typeof AuthenticatedSpaceIndexRoute
 }
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth': typeof AuthIndexRoute
+  '/space/meeting': typeof AuthenticatedSpaceMeetingRoute
   '/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/space': typeof AuthenticatedSpaceIndexRoute
 }
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/': typeof AuthIndexRoute
+  '/_authenticated/space/meeting': typeof AuthenticatedSpaceMeetingRoute
   '/_authenticated/user/avatar-select': typeof AuthenticatedUserAvatarSelectRoute
   '/_authenticated/space/': typeof AuthenticatedSpaceIndexRoute
 }
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/'
+    | '/space/meeting'
     | '/user/avatar-select'
     | '/space/'
   fileRoutesByTo: FileRoutesByTo
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth'
+    | '/space/meeting'
     | '/user/avatar-select'
     | '/space'
   id:
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/'
+    | '/_authenticated/space/meeting'
     | '/_authenticated/user/avatar-select'
     | '/_authenticated/space/'
   fileRoutesById: FileRoutesById
@@ -166,15 +179,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUserAvatarSelectRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/space/meeting': {
+      id: '/_authenticated/space/meeting'
+      path: '/space/meeting'
+      fullPath: '/space/meeting'
+      preLoaderRoute: typeof AuthenticatedSpaceMeetingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedSpaceMeetingRoute: typeof AuthenticatedSpaceMeetingRoute
   AuthenticatedUserAvatarSelectRoute: typeof AuthenticatedUserAvatarSelectRoute
   AuthenticatedSpaceIndexRoute: typeof AuthenticatedSpaceIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedSpaceMeetingRoute: AuthenticatedSpaceMeetingRoute,
   AuthenticatedUserAvatarSelectRoute: AuthenticatedUserAvatarSelectRoute,
   AuthenticatedSpaceIndexRoute: AuthenticatedSpaceIndexRoute,
 }
