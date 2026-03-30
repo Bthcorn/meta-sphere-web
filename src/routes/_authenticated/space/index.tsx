@@ -33,7 +33,6 @@ function SpaceIndex() {
 
   const campusHeight = 7;
 
-  // Navigate to the dedicated meeting page as soon as a session becomes active
   useEffect(() => {
     if (activeSession) {
       navigate({ to: '/space/meeting' });
@@ -69,86 +68,88 @@ function SpaceIndex() {
       )}
 
       <ZonePanel />
-
-      {/* Chat toggle always visible; panel slides up */}
       <ChatToggle open={chatOpen} onToggle={() => setChatOpen((o) => !o)} />
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
-
       <Crosshair />
-      <Canvas
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener('webglcontextlost', (e) => {
-            e.preventDefault();
-          });
-          gl.domElement.addEventListener('webglcontextrestored', () => {
-            console.info('[WebGL] context restored');
-          });
-        }}
-      >
+
+      <Canvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[20, 30, 20]} intensity={1} />
         <Sky sunPosition={[100, 20, 100]} />
 
         <Physics>
-          {/* --- THE OUTER CAMPUS SHELL (L-SHAPED) --- */}
           <RigidBody type='fixed'>
-            {/* Ceiling - Left Wing */}
+            {/* Ceiling sections */}
             <mesh position={[-10, campusHeight, 0]}>
               <boxGeometry args={[21, 0.1, 32]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
-
-            {/* Ceiling - Right Wing */}
             <mesh position={[10.5, campusHeight, 7.5]}>
               <boxGeometry args={[20, 0.1, 16]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
 
-            {/* Outer Left Wall */}
+            {/* Outer Walls */}
             <mesh position={[-20.5, campusHeight / 2, 0]}>
               <boxGeometry args={[1, campusHeight, 32]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
-
-            {/* Outer Back Wall (Left Wing) */}
             <mesh position={[-10, campusHeight / 2, -15.5]}>
               <boxGeometry args={[20, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
-
-            {/* Inner Right Wall (Left Wing - blocks the missing void) */}
             <mesh position={[0.5, campusHeight / 2, -8]}>
               <boxGeometry args={[1, campusHeight, 16]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
-
-            {/* Inner Back Wall (Right Wing - connects the L-shape) */}
             <mesh position={[10.5, campusHeight / 2, -0.5]}>
               <boxGeometry args={[20, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
-
-            {/* Outer Right Wall (Right Wing) */}
             <mesh position={[20.5, campusHeight / 2, 7.5]}>
               <boxGeometry args={[1, campusHeight, 16]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
-
-            {/* Outer Front Wall (Spans Both Wings) */}
             <mesh position={[0, campusHeight / 2, 15.5]}>
               <boxGeometry args={[42, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
+
+            {/* --- INTERNAL PARTITIONS --- */}
+
+            {/* 1. THE HOLEY WALL (Chilling <-> Library) */}
+            {/* Spacing logic: Starts exactly 0.65 units after the Spawn wall ends */}
+            {Array.from({ length: 11 }).map((_, i) => (
+              <mesh
+                key={`chilling-slat-${i}`}
+                position={[0, campusHeight / 2, 7.5 + (i + 1) * 0.65]}
+              >
+                <boxGeometry args={[0.3, campusHeight, 0.2]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+            ))}
+
+            {/* 2. Wall with Doorway (Spawn <-> Library) */}
+            <group position={[0, campusHeight / 2, 3.75]}>
+              <mesh position={[0, 0, -2.875]}>
+                <boxGeometry args={[0.4, campusHeight, 1.75]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+              <mesh position={[0, 0, 2.875]}>
+                <boxGeometry args={[0.4, campusHeight, 1.75]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+              <mesh position={[0, campusHeight / 2 - 1, 0]}>
+                <boxGeometry args={[0.4, 2, 4]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+            </group>
           </RigidBody>
 
-          {/* --- LEFT WING --- */}
+          {/* --- ROOM COMPONENTS --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
           <Spawn position={[-10, 0, 3.75]} width={20} depth={7.5} />
           <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
-
-          {/* --- RIGHT WING --- */}
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
           <Player position={DEFAULT_SPAWN} />
