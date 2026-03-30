@@ -7,10 +7,8 @@ import { Physics, RigidBody } from '@react-three/rapier';
 
 import { Spawn } from './-components/spawn';
 import { Meeting } from './-components/meeting';
-import { Lecture } from './-components/lecture';
 import { Library } from './-components/library';
 import { Chilling } from './-components/chilling';
-import { Private } from './-components/private';
 import { PresenceDebug } from './-components/presence-debug';
 
 import { Player } from '@/components/space/player';
@@ -33,10 +31,7 @@ function SpaceIndex() {
   const [chatOpen, setChatOpen] = useState(false);
   const { currentZoneConfig, activeSession } = useSessionStore();
 
-  const campusWidth = 40;
-  const campusDepth = 30;
   const campusHeight = 7;
-  const wallThickness = 1;
 
   // Navigate to the dedicated meeting page as soon as a session becomes active
   useEffect(() => {
@@ -97,32 +92,53 @@ function SpaceIndex() {
         <Sky sunPosition={[100, 20, 100]} />
 
         <Physics>
-          {/* --- THE OUTER CAMPUS SHELL --- */}
+          {/* --- THE OUTER CAMPUS SHELL (L-SHAPED) --- */}
           <RigidBody type='fixed'>
-            <mesh position={[0, campusHeight, 0]}>
-              <boxGeometry
-                args={[campusWidth + wallThickness * 2, 0.1, campusDepth + wallThickness * 2]}
-              />
+            {/* Ceiling - Left Wing */}
+            <mesh position={[-10, campusHeight, 0]}>
+              <boxGeometry args={[21, 0.1, 32]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
 
-            <mesh position={[0, campusHeight / 2, -campusDepth / 2 - wallThickness / 2]}>
-              <boxGeometry args={[campusWidth, campusHeight, wallThickness]} />
+            {/* Ceiling - Right Wing */}
+            <mesh position={[10.5, campusHeight, 7.5]}>
+              <boxGeometry args={[20, 0.1, 16]} />
+              <meshStandardMaterial color='#1f2937' />
+            </mesh>
+
+            {/* Outer Left Wall */}
+            <mesh position={[-20.5, campusHeight / 2, 0]}>
+              <boxGeometry args={[1, campusHeight, 32]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
 
-            <mesh position={[0, campusHeight / 2, campusDepth / 2 + wallThickness / 2]}>
-              <boxGeometry args={[campusWidth, campusHeight, wallThickness]} />
+            {/* Outer Back Wall (Left Wing) */}
+            <mesh position={[-10, campusHeight / 2, -15.5]}>
+              <boxGeometry args={[20, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
 
-            <mesh position={[-campusWidth / 2 - wallThickness / 2, campusHeight / 2, 0]}>
-              <boxGeometry args={[wallThickness, campusHeight, campusDepth + wallThickness * 2]} />
+            {/* Inner Right Wall (Left Wing - blocks the missing void) */}
+            <mesh position={[0.5, campusHeight / 2, -8]}>
+              <boxGeometry args={[1, campusHeight, 16]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
 
-            <mesh position={[campusWidth / 2 + wallThickness / 2, campusHeight / 2, 0]}>
-              <boxGeometry args={[wallThickness, campusHeight, campusDepth + wallThickness * 2]} />
+            {/* Inner Back Wall (Right Wing - connects the L-shape) */}
+            <mesh position={[10.5, campusHeight / 2, -0.5]}>
+              <boxGeometry args={[20, campusHeight, 1]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+
+            {/* Outer Right Wall (Right Wing) */}
+            <mesh position={[20.5, campusHeight / 2, 7.5]}>
+              <boxGeometry args={[1, campusHeight, 16]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+
+            {/* Outer Front Wall (Spans Both Wings) */}
+            <mesh position={[0, campusHeight / 2, 15.5]}>
+              <boxGeometry args={[42, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
           </RigidBody>
@@ -133,9 +149,7 @@ function SpaceIndex() {
           <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
 
           {/* --- RIGHT WING --- */}
-          <Lecture position={[10, 0, -10]} width={20} depth={10} />
-          <Library position={[10, 0, 0]} width={20} depth={10} />
-          <Private position={[10, 0, 10]} width={20} depth={10} />
+          <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
           <Player position={DEFAULT_SPAWN} />
           <RemotePlayers />
