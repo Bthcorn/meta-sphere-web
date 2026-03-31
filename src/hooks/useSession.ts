@@ -46,7 +46,7 @@ export function useSession() {
       socket.off('session:started', invalidateSessionList);
       socket.off('session:ended', invalidateSessionList);
     };
-  }, [activeSession, qc]);
+  }, [activeSession, qc, roomId]);
 
   // ── Session list (multi mode) ────────────────────────────────────────────
   const { data: sessionList = [], isLoading: listLoading } = useQuery({
