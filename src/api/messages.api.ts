@@ -6,4 +6,9 @@ export const messagesApi = {
     api
       .get<ChatMessage[]>(`/api/messages/room/${roomId}`, { params: { limit } })
       .then((r) => r.data),
+
+  getSessionMessages: (sessionId: string, limit = 100) =>
+    api
+      .get<ChatMessage[]>(`/api/messages/session/${sessionId}`, { params: { limit } })
+      .then((r) => r.data),
 };

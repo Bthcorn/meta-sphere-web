@@ -1,4 +1,5 @@
 import { useChatStore } from '@/store/chat.store';
+import { useChat } from '@/hooks/useChat';
 import { MessageSquare } from 'lucide-react';
 
 interface Props {
@@ -7,7 +8,9 @@ interface Props {
 }
 
 export function ChatToggle({ open, onToggle }: Props) {
-  const messages = useChatStore((s) => s.messages);
+  const { ctx } = useChat();
+  const messagesByContext = useChatStore((s) => s.messagesByContext);
+  const count = ctx ? (messagesByContext[ctx.contextKey]?.length ?? 0) : 0;
 
   return (
     <button
@@ -23,14 +26,13 @@ export function ChatToggle({ open, onToggle }: Props) {
       title={open ? 'Close chat' : 'Open chat'}
     >
       <MessageSquare className='size-4' />
-      {/* Unread badge — shows total message count when closed */}
-      {!open && messages.length > 0 && (
+      {!open && count > 0 && (
         <span
           className='absolute -right-1 -top-1 flex h-4 w-4 items-center
                          justify-center rounded-full bg-red-500 text-[9px]
                          font-bold text-white'
         >
-          {messages.length > 9 ? '9+' : messages.length}
+          {count > 9 ? '9+' : count}
         </span>
       )}
     </button>
