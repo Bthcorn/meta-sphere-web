@@ -5,11 +5,13 @@ import { useChatStore } from '@/store/chat.store';
 import { useSessionStore } from '@/store/session.store';
 import { useSocketStore } from '@/store/socket.store';
 import { socketManager } from '@/lib/socket-manager';
+import { ZONE_CONFIG } from '@/config/zone-sessions';
 import type { ChatMessage, ChatReaction, TypingIndicator } from '@/types/message';
 
-// Must be well above the sender's heartbeat interval (2000ms in chat-panel) to
-// survive network jitter. Server TTL is 4s; we give an extra 1s of headroom.
 const TYPING_CLEAR_MS = 5000;
+
+// Spawn area and chilling zone share the same open-area room.
+const COMMON_ZONE = ZONE_CONFIG.zone_chilling;
 
 /** Derives the current chat context from session/zone state. */
 function useChatContext() {
@@ -20,22 +22,22 @@ function useChatContext() {
       type: 'session' as const,
       contextKey: `session:${activeSession.id}`,
       sessionId: activeSession.id,
-      roomId: currentZoneConfig?.roomId ?? '',
+      roomId: currentZoneConfig?.roomId ?? COMMON_ZONE.roomId,
       label: activeSession.title,
     };
   }
 
-  if (currentZoneConfig) {
-    return {
-      type: 'room' as const,
-      contextKey: `room:${currentZoneConfig.roomId}`,
-      sessionId: undefined,
-      roomId: currentZoneConfig.roomId,
-      label: currentZoneConfig.label,
-    };
-  }
+  // Use the explicit zone the player walked into, or fall back to the common
+  // area (chilling room) which covers both the spawn point and chilling zone.
+  const zone = currentZoneConfig ?? COMMON_ZONE;
 
-  return null;
+  return {
+    type: 'room' as const,
+    contextKey: `room:${zone.roomId}`,
+    sessionId: undefined,
+    roomId: zone.roomId,
+    label: zone.label,
+  };
 }
 
 export function useChat() {
