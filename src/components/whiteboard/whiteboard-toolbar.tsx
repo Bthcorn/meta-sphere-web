@@ -1,4 +1,15 @@
-import { Pencil, Eraser, Undo2, Trash2, Download } from 'lucide-react';
+import {
+  Pencil,
+  Eraser,
+  Undo2,
+  Trash2,
+  Download,
+  Square,
+  Circle,
+  Minus,
+  MoveRight,
+} from 'lucide-react';
+import type { StrokeType } from '@/types/whiteboard';
 
 const COLORS = [
   '#ffffff',
@@ -14,12 +25,12 @@ const COLORS = [
 const WIDTHS = [2, 4, 8, 14];
 
 interface Props {
-  tool: 'pen' | 'eraser';
+  tool: StrokeType;
   color: string;
   width: number;
   isHost: boolean;
   canUndo: boolean;
-  onToolChange: (t: 'pen' | 'eraser') => void;
+  onToolChange: (t: StrokeType) => void;
   onColorChange: (c: string) => void;
   onWidthChange: (w: number) => void;
   onUndo: () => void;
@@ -45,12 +56,36 @@ export function WhiteboardToolbar({
       className='pointer-events-auto flex items-center gap-2 px-3 py-2
                   rounded-xl border border-white/10 bg-black/70 backdrop-blur-md shadow-xl'
     >
-      {/* Tool buttons */}
+      {/* Freehand tools */}
       <ToolBtn active={tool === 'pen'} onClick={() => onToolChange('pen')} title='Pen'>
         <Pencil className='size-4' />
       </ToolBtn>
       <ToolBtn active={tool === 'eraser'} onClick={() => onToolChange('eraser')} title='Eraser'>
         <Eraser className='size-4' />
+      </ToolBtn>
+
+      <Divider />
+
+      {/* Shape tools */}
+      <ToolBtn
+        active={tool === 'rectangle'}
+        onClick={() => onToolChange('rectangle')}
+        title='Rectangle'
+      >
+        <Square className='size-4' />
+      </ToolBtn>
+      <ToolBtn
+        active={tool === 'circle'}
+        onClick={() => onToolChange('circle')}
+        title='Circle / Ellipse'
+      >
+        <Circle className='size-4' />
+      </ToolBtn>
+      <ToolBtn active={tool === 'line'} onClick={() => onToolChange('line')} title='Line'>
+        <Minus className='size-4' />
+      </ToolBtn>
+      <ToolBtn active={tool === 'arrow'} onClick={() => onToolChange('arrow')} title='Arrow'>
+        <MoveRight className='size-4' />
       </ToolBtn>
 
       <Divider />

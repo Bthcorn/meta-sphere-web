@@ -64,6 +64,14 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
 
     if (!rbRef.current) return;
 
+    // When a panel is open (chat, whiteboard, zone), keyboard input belongs to the UI —
+    // halt the player so WASD keystrokes don't drive movement while the user is typing.
+    if (!lockEnabled) {
+      const linvel = rbRef.current.linvel();
+      rbRef.current.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
+      return;
+    }
+
     const { forward, backward, left, right } = getKeys();
     const speed = 8;
 

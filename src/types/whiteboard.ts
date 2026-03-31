@@ -1,4 +1,4 @@
-export type StrokeType = 'pen' | 'eraser';
+export type StrokeType = 'pen' | 'eraser' | 'rectangle' | 'circle' | 'line' | 'arrow';
 
 export interface Stroke {
   id: string;

@@ -8,13 +8,14 @@ import { useWhiteboard } from '@/hooks/useWhiteboard';
 import { useWhiteboardStore } from '@/store/whiteboard.store';
 import { useSessionStore } from '@/store/session.store';
 import { useAuthStore } from '@/store/auth.store';
+import type { StrokeType } from '@/types/whiteboard';
 
 interface Props {
   onClose: () => void;
 }
 
 export function WhiteboardPanel({ onClose }: Props) {
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [tool, setTool] = useState<StrokeType>('pen');
   const [color, setColor] = useState('#ffffff');
   const [width, setWidth] = useState(4);
 

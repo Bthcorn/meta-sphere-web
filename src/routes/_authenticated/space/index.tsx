@@ -137,7 +137,7 @@ function SpaceIndex() {
           <Library position={[10, 0, 0]} width={20} depth={10} />
           <Private position={[10, 0, 10]} width={20} depth={10} />
 
-          <Player position={DEFAULT_SPAWN} />
+          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !currentZoneConfig} />
           <RemotePlayers />
         </Physics>
       </Canvas>
