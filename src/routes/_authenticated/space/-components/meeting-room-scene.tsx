@@ -52,7 +52,11 @@ function RoomGeometry() {
   );
 }
 
-export function MeetingRoomScene() {
+interface Props {
+  lockEnabled?: boolean;
+}
+
+export function MeetingRoomScene({ lockEnabled = true }: Props) {
   return (
     <Canvas
       dpr={[1, 1.5]}
@@ -79,7 +83,7 @@ export function MeetingRoomScene() {
         <RoomGeometry />
         <MeetingFurniture position={[0, 0, 0]} scale={0.85} />
 
-        <Player position={SPAWN} />
+        <Player position={SPAWN} lockEnabled={lockEnabled} />
         <RemotePlayers />
       </Physics>
     </Canvas>
