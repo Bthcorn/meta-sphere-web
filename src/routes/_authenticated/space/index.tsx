@@ -7,10 +7,8 @@ import { Physics, RigidBody } from '@react-three/rapier';
 
 import { Spawn } from './-components/spawn';
 import { Meeting } from './-components/meeting';
-import { Lecture } from './-components/lecture';
 import { Library } from './-components/library';
 import { Chilling } from './-components/chilling';
-import { Private } from './-components/private';
 import { PresenceDebug } from './-components/presence-debug';
 
 import { Player } from '@/components/space/player';
@@ -33,12 +31,8 @@ function SpaceIndex() {
   const [chatOpen, setChatOpen] = useState(false);
   const { currentZoneConfig, activeSession } = useSessionStore();
 
-  const campusWidth = 40;
-  const campusDepth = 30;
   const campusHeight = 7;
-  const wallThickness = 1;
 
-  // Navigate to the dedicated meeting page as soon as a session becomes active
   useEffect(() => {
     if (activeSession) {
       navigate({ to: '/space/meeting' });
@@ -74,68 +68,89 @@ function SpaceIndex() {
       )}
 
       <ZonePanel />
-
-      {/* Chat toggle always visible; panel slides up */}
       <ChatToggle open={chatOpen} onToggle={() => setChatOpen((o) => !o)} />
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
-
       <Crosshair />
-      <Canvas
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener('webglcontextlost', (e) => {
-            e.preventDefault();
-          });
-          gl.domElement.addEventListener('webglcontextrestored', () => {
-            console.info('[WebGL] context restored');
-          });
-        }}
-      >
+
+      <Canvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[20, 30, 20]} intensity={1} />
         <Sky sunPosition={[100, 20, 100]} />
 
         <Physics>
-          {/* --- THE OUTER CAMPUS SHELL --- */}
           <RigidBody type='fixed'>
-            <mesh position={[0, campusHeight, 0]}>
-              <boxGeometry
-                args={[campusWidth + wallThickness * 2, 0.1, campusDepth + wallThickness * 2]}
-              />
+            {/* Ceiling sections */}
+            <mesh position={[-10, campusHeight, 0]}>
+              <boxGeometry args={[21, 0.1, 32]} />
+              <meshStandardMaterial color='#1f2937' />
+            </mesh>
+            <mesh position={[10.5, campusHeight, 7.5]}>
+              <boxGeometry args={[20, 0.1, 16]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
 
-            <mesh position={[0, campusHeight / 2, -campusDepth / 2 - wallThickness / 2]}>
-              <boxGeometry args={[campusWidth, campusHeight, wallThickness]} />
+            {/* Outer Walls */}
+            <mesh position={[-20.5, campusHeight / 2, 0]}>
+              <boxGeometry args={[1, campusHeight, 32]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+            <mesh position={[-10, campusHeight / 2, -15.5]}>
+              <boxGeometry args={[20, campusHeight, 1]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+            <mesh position={[0.5, campusHeight / 2, -8]}>
+              <boxGeometry args={[1, campusHeight, 16]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+            <mesh position={[10.5, campusHeight / 2, -0.5]}>
+              <boxGeometry args={[20, campusHeight, 1]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+            <mesh position={[20.5, campusHeight / 2, 7.5]}>
+              <boxGeometry args={[1, campusHeight, 16]} />
+              <meshStandardMaterial color='#4b5563' />
+            </mesh>
+            <mesh position={[0, campusHeight / 2, 15.5]}>
+              <boxGeometry args={[42, campusHeight, 1]} />
               <meshStandardMaterial color='#4b5563' />
             </mesh>
 
-            <mesh position={[0, campusHeight / 2, campusDepth / 2 + wallThickness / 2]}>
-              <boxGeometry args={[campusWidth, campusHeight, wallThickness]} />
-              <meshStandardMaterial color='#4b5563' />
-            </mesh>
+            {/* --- INTERNAL PARTITIONS --- */}
 
-            <mesh position={[-campusWidth / 2 - wallThickness / 2, campusHeight / 2, 0]}>
-              <boxGeometry args={[wallThickness, campusHeight, campusDepth + wallThickness * 2]} />
-              <meshStandardMaterial color='#4b5563' />
-            </mesh>
+            {/* 1. THE HOLEY WALL (Chilling <-> Library) */}
+            {/* Spacing logic: Starts exactly 0.65 units after the Spawn wall ends */}
+            {Array.from({ length: 11 }).map((_, i) => (
+              <mesh
+                key={`chilling-slat-${i}`}
+                position={[0, campusHeight / 2, 7.5 + (i + 1) * 0.65]}
+              >
+                <boxGeometry args={[0.3, campusHeight, 0.2]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+            ))}
 
-            <mesh position={[campusWidth / 2 + wallThickness / 2, campusHeight / 2, 0]}>
-              <boxGeometry args={[wallThickness, campusHeight, campusDepth + wallThickness * 2]} />
-              <meshStandardMaterial color='#4b5563' />
-            </mesh>
+            {/* 2. Wall with Doorway (Spawn <-> Library) */}
+            <group position={[0, campusHeight / 2, 3.75]}>
+              <mesh position={[0, 0, -2.875]}>
+                <boxGeometry args={[0.4, campusHeight, 1.75]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+              <mesh position={[0, 0, 2.875]}>
+                <boxGeometry args={[0.4, campusHeight, 1.75]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+              <mesh position={[0, campusHeight / 2 - 1, 0]}>
+                <boxGeometry args={[0.4, 2, 4]} />
+                <meshStandardMaterial color='#374151' />
+              </mesh>
+            </group>
           </RigidBody>
 
-          {/* --- LEFT WING --- */}
+          {/* --- ROOM COMPONENTS --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
           <Spawn position={[-10, 0, 3.75]} width={20} depth={7.5} />
           <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
-
-          {/* --- RIGHT WING --- */}
-          <Lecture position={[10, 0, -10]} width={20} depth={10} />
-          <Library position={[10, 0, 0]} width={20} depth={10} />
-          <Private position={[10, 0, 10]} width={20} depth={10} />
+          <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
           <Player position={DEFAULT_SPAWN} />
           <RemotePlayers />
