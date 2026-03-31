@@ -22,13 +22,14 @@ const keyboardMap = [
 
 type PlayerProps = {
   position?: [number, number, number];
+  lockEnabled?: boolean;
 };
 
 /** Matches ~2u Rapier capsule (halfHeight 0.5, radius 0.5); feet near y = -1 in body space. */
 const LOCAL_AVATAR_SCALE = 1.45;
 const LOCAL_AVATAR_Y_OFFSET = -0.275;
 
-function PlayerMesh({ position = [-22.5, 5, 15] }: PlayerProps) {
+function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerProps) {
   const rbRef = useRef<RapierRigidBody>(null);
   const avatarOrientationRef = useRef<THREE.Group>(null);
   const [, getKeys] = useKeyboardControls();
@@ -62,6 +63,14 @@ function PlayerMesh({ position = [-22.5, 5, 15] }: PlayerProps) {
     }
 
     if (!rbRef.current) return;
+
+    // When a panel is open (chat, whiteboard, zone), keyboard input belongs to the UI —
+    // halt the player so WASD keystrokes don't drive movement while the user is typing.
+    if (!lockEnabled) {
+      const linvel = rbRef.current.linvel();
+      rbRef.current.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
+      return;
+    }
 
     const { forward, backward, left, right } = getKeys();
     const speed = 8;
@@ -116,7 +125,7 @@ function PlayerMesh({ position = [-22.5, 5, 15] }: PlayerProps) {
 
       <group>
         <PerspectiveCamera makeDefault position={[0, 0.75, 0]} fov={60} near={0.6} />
-        <PointerLockControls />
+        <PointerLockControls enabled={lockEnabled} />
       </group>
       <group
         ref={avatarOrientationRef}
@@ -129,10 +138,10 @@ function PlayerMesh({ position = [-22.5, 5, 15] }: PlayerProps) {
   );
 }
 
-export function Player({ position }: PlayerProps) {
+export function Player({ position, lockEnabled }: PlayerProps) {
   return (
     <KeyboardControls map={keyboardMap}>
-      <PlayerMesh position={position} />
+      <PlayerMesh position={position} lockEnabled={lockEnabled} />
     </KeyboardControls>
   );
 }

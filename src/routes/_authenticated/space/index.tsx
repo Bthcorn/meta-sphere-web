@@ -152,7 +152,7 @@ function SpaceIndex() {
           <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
-          <Player position={DEFAULT_SPAWN} />
+          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !currentZoneConfig} />
           <RemotePlayers />
         </Physics>
       </Canvas>
