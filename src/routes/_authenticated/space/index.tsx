@@ -5,10 +5,9 @@ import { SafeCanvas } from '@/components/space/safe-canvas';
 import { Sky } from '@react-three/drei';
 import { Physics, RigidBody } from '@react-three/rapier';
 
-import { Spawn } from './-components/spawn';
+import { Common } from './-components/common';
 import { Meeting } from './-components/meeting';
 import { Library } from './-components/library';
-import { Chilling } from './-components/chilling';
 import { PresenceDebug } from './-components/presence-debug';
 
 import { Player } from '@/components/space/player';
@@ -127,7 +126,7 @@ function SpaceIndex() {
 
             {/* --- INTERNAL PARTITIONS --- */}
 
-            {/* 1. THE HOLEY WALL (Chilling <-> Library) */}
+            {/* 1. THE HOLEY WALL (Extended Spawn <-> Library) */}
             {/* Spacing logic: Starts exactly 0.65 units after the Spawn wall ends */}
             {Array.from({ length: 11 }).map((_, i) => (
               <mesh
@@ -158,8 +157,8 @@ function SpaceIndex() {
 
           {/* --- ROOM COMPONENTS --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
-          <Spawn position={[-10, 0, 3.75]} width={20} depth={7.5} />
-          <Chilling position={[-10, 0, 11.25]} width={20} depth={7.5} />
+          {/* Spawn point extended to cover old Chilling area (depth 7.5 + 7.5 = 15, center Z adjusted to 7.5) */}
+          <Common position={[-10, 0, 7.5]} width={20} depth={15} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
           <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !currentZoneConfig} />
