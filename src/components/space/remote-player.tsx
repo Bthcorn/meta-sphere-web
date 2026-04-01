@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { useAuthStore } from '@/store/auth.store';
+import { useVoiceStore } from '@/store/voice.store';
 import { decodeJwtSub } from '@/lib/jwt';
 import { DEFAULT_SPAWN } from '@/components/meta-sphere-3d/constants';
 import { PlayerAvatar } from '@/components/avatar/player-avatar';
@@ -23,9 +24,17 @@ type RemotePlayerProps = {
   bobOffset: number;
   /** Explicit yaw from backend. undefined = backend doesn't support it; fall back to movement. */
   rotationY: number | undefined;
+  speaking: boolean;
 };
 
-function RemotePlayer({ username, position, color, bobOffset, rotationY }: RemotePlayerProps) {
+function RemotePlayer({
+  username,
+  position,
+  color,
+  bobOffset,
+  rotationY,
+  speaking,
+}: RemotePlayerProps) {
   const groupRef = useRef<THREE.Group>(null);
 
   // Per-instance scratch objects — never share these across instances.
@@ -71,7 +80,7 @@ function RemotePlayer({ username, position, color, bobOffset, rotationY }: Remot
 
   return (
     <group ref={groupRef} position={position}>
-      <PlayerAvatar username={username} color={color} bobOffset={bobOffset} />
+      <PlayerAvatar username={username} color={color} bobOffset={bobOffset} speaking={speaking} />
     </group>
   );
 }
@@ -80,6 +89,7 @@ export function RemotePlayers() {
   const users = useSpacePresenceStore((s) => s.users);
   const token = useAuthStore((s) => s.token);
   const currentUserId = useAuthStore((s) => s.user?.id ?? null);
+  const speakingUserIds = useVoiceStore((s) => s.speakingUserIds);
 
   const selfId = decodeJwtSub(token) ?? (currentUserId != null ? String(currentUserId) : '');
   const remoteUsers = Object.values(users).filter((u) => String(u.userId) !== selfId);
@@ -94,6 +104,7 @@ export function RemotePlayers() {
           color={colorFromUsername(username)}
           bobOffset={bobOffsetFromUsername(username)}
           rotationY={position.rotationY}
+          speaking={speakingUserIds.has(String(userId))}
         />
       ))}
     </>

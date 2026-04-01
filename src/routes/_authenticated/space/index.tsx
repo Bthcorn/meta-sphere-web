@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/store/auth.store';
 import { useSpaceEntry } from '@/hooks/useSpaceEntry';
-import { Canvas } from '@react-three/fiber';
+import { SafeCanvas } from '@/components/space/safe-canvas';
 import { Sky } from '@react-three/drei';
 import { Physics, RigidBody } from '@react-three/rapier';
 
@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { useSessionStore } from '@/store/session.store';
 import { ChatToggle } from '@/components/space/chat/chat-toggle';
 import { ChatPanel } from '@/components/space/chat/chat-panel';
+import { VoiceBar } from '@/components/space/voice/voice-bar';
 
 export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
@@ -33,8 +34,11 @@ function SpaceIndex() {
 
   const campusHeight = 7;
 
+  // Navigate to the dedicated meeting page for formal sessions (MEETING, STUDY,
+  // WORKSHOP). SOCIAL sessions (chilling / spawn common area) stay in the space
+  // so the player can move around while talking.
   useEffect(() => {
-    if (activeSession) {
+    if (activeSession && activeSession.type !== 'SOCIAL') {
       navigate({ to: '/space/meeting' });
     }
   }, [activeSession, navigate]);
@@ -70,9 +74,15 @@ function SpaceIndex() {
       <ZonePanel />
       <ChatToggle open={chatOpen} onToggle={() => setChatOpen((o) => !o)} />
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
-      <Crosshair />
 
-      <Canvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'high-performance' }}>
+      {/* Voice bar for the common area. VoiceBar returns null internally when
+          there is no active session. For MEETING/STUDY sessions the navigation
+          effect unmounts this component (and cancels the connect) before the
+          async voice-token request completes, so there is no double-connect. */}
+      <VoiceBar />
+
+      <Crosshair />
+      <SafeCanvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[20, 30, 20]} intensity={1} />
         <Sky sunPosition={[100, 20, 100]} />
@@ -155,7 +165,7 @@ function SpaceIndex() {
           <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !currentZoneConfig} />
           <RemotePlayers />
         </Physics>
-      </Canvas>
+      </SafeCanvas>
       {import.meta.env.DEV && <PresenceDebug />}
     </div>
   );

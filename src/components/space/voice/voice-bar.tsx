@@ -1,63 +1,129 @@
 import { useVoice } from '@/hooks/useVoice';
 import { useSessionStore } from '@/store/session.store';
-import { MicIcon, MicOffIcon } from 'lucide-react';
+import { useAuthStore } from '@/store/auth.store';
+import { MicIcon, MicOffIcon, Volume2Icon } from 'lucide-react';
 
 export function VoiceBar() {
-  const { muted, toggleMute, peers, error } = useVoice();
-  const { participants } = useSessionStore();
+  const { muted, toggleMute, peers, connected, error } = useVoice();
+  const { participants, activeSession } = useSessionStore();
+  const currentUserId = useAuthStore((s) => s.user?.id);
+
+  // Exclude self from participant display
+  const otherParticipants = participants.filter((p) => String(p.userId) !== String(currentUserId));
 
   return (
     <div
       className='pointer-events-auto absolute bottom-4 left-1/2 z-20
-                  -translate-x-1/2 flex items-center gap-3
-                  rounded-full border border-white/10 bg-black/70
-                  px-3 py-2 text-white backdrop-blur-md'
+                 -translate-x-1/2 flex items-center gap-3
+                 rounded-full border border-white/10 bg-black/70
+                 px-4 py-2 text-white backdrop-blur-md shadow-lg'
     >
-      {/* Connected peers */}
-      {participants.length > 0 && (
+      {/* Room label — session name or "Common Area" for the lobby */}
+      <span className='text-[10px] font-semibold uppercase tracking-widest text-white/30'>
+        {activeSession ? activeSession.title : 'Common Area'}
+      </span>
+
+      <div className='h-4 w-px bg-white/10' />
+
+      {/* Participant avatars — use session list when in a session, LiveKit
+          peers when in the lobby (no session participant list available). */}
+      {(activeSession ? otherParticipants.length > 0 : peers.length > 0) && (
         <>
-          <div className='flex items-center gap-1.5'>
-            {participants.slice(0, 6).map((p) => {
-              const isConnected = peers.some((peer) => peer.userId === p.userId);
-              return (
-                <div key={p.userId} className='flex flex-col items-center gap-0.5'>
-                  <div
-                    className={`h-6 w-6 rounded-full text-[9px] font-medium
-                                 flex items-center justify-center ring-1
-                                 ${
-                                   isConnected
-                                     ? 'bg-green-600/80 ring-green-400/50'
-                                     : 'bg-white/10 ring-white/10'
-                                 }`}
-                    title={p.user.username}
-                  >
-                    {p.user.username[0].toUpperCase()}
-                  </div>
+          <div className='flex items-center -space-x-1.5'>
+            {(activeSession
+              ? otherParticipants.slice(0, 6).map((p) => {
+                  const peer = peers.find((peer) => peer.userId === String(p.userId));
+                  return {
+                    key: String(p.userId),
+                    label: p.user.username[0].toUpperCase(),
+                    title: p.user.username,
+                    isSpeaking: peer?.speaking ?? false,
+                    isConnected: Boolean(peer),
+                  };
+                })
+              : peers.slice(0, 6).map((p) => ({
+                  key: p.userId,
+                  label: p.username[0]?.toUpperCase() ?? '?',
+                  title: p.username,
+                  isSpeaking: p.speaking,
+                  isConnected: true,
+                }))
+            ).map(({ key, label, title, isSpeaking, isConnected }, i, arr) => (
+              <div key={key} className='relative' title={title} style={{ zIndex: arr.length - i }}>
+                {isSpeaking && (
+                  <span className='absolute inset-0 rounded-full animate-ping bg-green-400/40' />
+                )}
+                <div
+                  className={`relative flex h-7 w-7 items-center justify-center
+                              rounded-full text-[10px] font-semibold ring-2
+                              transition-all duration-200
+                              ${
+                                isSpeaking
+                                  ? 'bg-green-500/90 ring-green-400'
+                                  : isConnected
+                                    ? 'bg-indigo-500/70 ring-indigo-400/50'
+                                    : 'bg-white/10 ring-white/10'
+                              }`}
+                >
+                  {label}
                 </div>
-              );
-            })}
+              </div>
+            ))}
+
+            {(activeSession ? otherParticipants.length : peers.length) > 6 && (
+              <div
+                className='relative z-10 flex h-7 w-7 items-center justify-center
+                           rounded-full bg-white/10 text-[9px] font-medium
+                           ring-2 ring-white/10'
+              >
+                +{(activeSession ? otherParticipants.length : peers.length) - 6}
+              </div>
+            )}
           </div>
+
           <div className='h-4 w-px bg-white/10' />
         </>
       )}
 
-      {error && <span className='text-xs text-red-400'>{error}</span>}
+      {/* Error */}
+      {error && (
+        <span className='max-w-[180px] truncate text-xs text-red-400' title={error}>
+          {error}
+        </span>
+      )}
 
+      {/* Connection state label */}
+      <div className='flex items-center gap-1.5'>
+        <span
+          className={`h-1.5 w-1.5 rounded-full transition-colors
+                     ${connected ? 'bg-green-400' : 'bg-white/20'}`}
+        />
+        <span className='text-[10px] text-white/40'>
+          {connected
+            ? peers.length === 0
+              ? 'Live · Waiting'
+              : `Live · ${peers.length}`
+            : 'Connecting…'}
+        </span>
+        {connected && peers.length > 0 && <Volume2Icon className='size-3 text-white/30' />}
+      </div>
+
+      <div className='h-4 w-px bg-white/10' />
+
+      {/* Mute button */}
       <button
         onClick={toggleMute}
-        className={`flex h-9 w-9 items-center justify-center rounded-full
-                    transition-all
-                    ${
-                      muted
-                        ? 'bg-red-600/80 ring-1 ring-red-400/50 hover:bg-red-600'
-                        : 'bg-white/10 hover:bg-white/20'
-                    }`}
+        className={`flex h-8 w-8 items-center justify-center rounded-full
+                   transition-all duration-150
+                   ${
+                     muted
+                       ? 'bg-red-600/80 ring-1 ring-red-400/50 hover:bg-red-600'
+                       : 'bg-white/10 hover:bg-white/20'
+                   }`}
         title={muted ? 'Unmute' : 'Mute'}
       >
-        {muted ? <MicOffIcon className='size-4' /> : <MicIcon className='size-4' />}
+        {muted ? <MicOffIcon className='size-3.5' /> : <MicIcon className='size-3.5' />}
       </button>
-
-      <span className='text-xs text-white/40'>{peers.length} connected</span>
     </div>
   );
 }

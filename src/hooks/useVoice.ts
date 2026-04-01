@@ -1,168 +1,217 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { socketManager } from '@/lib/socket-manager';
+import {
+  Room,
+  RoomEvent,
+  Track,
+  Participant,
+  RemoteParticipant,
+  RemoteTrackPublication,
+  RemoteTrack,
+} from 'livekit-client';
 import { useSessionStore } from '@/store/session.store';
+import { useAuthStore } from '@/store/auth.store';
+import { useVoiceStore } from '@/store/voice.store';
+import { useSpatialAudio } from '@/hooks/useSpatialAudio';
+import {
+  resumeSpatialAudioContext,
+  ensureSpatialAudioContextRunning,
+} from '@/lib/spatial-audio-context';
+import { api } from '@/lib/api';
 
 interface PeerState {
-  userId: string;
-  stream: MediaStream;
+  userId: string; // LiveKit participant identity = your userId
+  username: string; // LiveKit participant name = display name
+  speaking: boolean;
 }
 
 export function useVoice() {
-  const { activeSession, participants } = useSessionStore();
+  const { activeSession } = useSessionStore();
+  const token = useAuthStore((s) => s.token);
+
   const [muted, setMuted] = useState(false);
   const [peers, setPeers] = useState<PeerState[]>([]);
+  const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const localStream = useRef<MediaStream | null>(null);
-  const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
-  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const roomRef = useRef<Room | null>(null);
+  const { addStream, removeStream } = useSpatialAudio();
+  const setSpeakingUserIds = useVoiceStore((s) => s.setSpeakingUserIds);
 
-  const createPeer = useCallback((targetUserId: string, isInitiator: boolean) => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  // ─── Connect to LiveKit room when session becomes active (or lobby) ─────
+  useEffect(() => {
+    if (!token) return;
+
+    let cancelled = false;
+    const room = new Room({
+      // Disable adaptive stream: we route audio through our own Web Audio
+      // graph for spatial positioning, so LiveKit must not attach tracks to
+      // its own hidden <audio> elements in parallel.
+      adaptiveStream: false,
+      // Keep dynacast off: with dynacast enabled the encoder pauses when no
+      // one is subscribed yet, causing a silent gap for the second person to
+      // join since subscription and transmission are not perfectly synchronised.
+      dynacast: false,
     });
+    roomRef.current = room;
 
-    // Add local tracks
-    localStream.current?.getTracks().forEach((track) => pc.addTrack(track, localStream.current!));
+    // ── Event: remote participant starts sending audio ──────────────────
+    const onTrackSubscribed = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
+      participant: RemoteParticipant
+    ) => {
+      if (track.kind !== Track.Kind.Audio) return;
 
-    // Forward ICE candidates
-    pc.onicecandidate = ({ candidate }) => {
-      if (candidate) {
-        socketManager.emit('webrtc:ice-candidate', { targetUserId, candidate });
-      }
-    };
+      // Create the element ourselves with muted=true BEFORE attach() so the
+      // browser's autoplay policy allows the internal play() call that LiveKit
+      // makes. Unmuted elements require a prior user gesture; muted ones are
+      // always allowed. Our audio graph reads from audioEl.srcObject via
+      // createMediaStreamSource, which bypasses the element's muted/volume
+      // state entirely, so listeners still hear the remote participant.
+      const audioEl = document.createElement('audio');
+      audioEl.muted = true;
+      audioEl.autoplay = true;
+      document.body.appendChild(audioEl);
+      track.attach(audioEl);
 
-    // Receive remote audio
-    pc.ontrack = ({ streams: [stream] }) => {
+      addStream(participant.identity, audioEl);
+
       setPeers((prev) => {
-        const exists = prev.find((p) => p.userId === targetUserId);
-        if (exists) return prev;
-        return [...prev, { userId: targetUserId, stream }];
+        if (prev.find((p) => p.userId === participant.identity)) return prev;
+        return [
+          ...prev,
+          {
+            userId: participant.identity,
+            username: participant.name ?? participant.identity,
+            speaking: false,
+          },
+        ];
       });
-      // Auto-play audio
-      let audio = audioRefs.current.get(targetUserId);
-      if (!audio) {
-        audio = new Audio();
-        audio.autoplay = true;
-        audioRefs.current.set(targetUserId, audio);
-      }
-      audio.srcObject = stream;
     };
 
-    peerConnections.current.set(targetUserId, pc);
+    // ── Event: remote participant stops sending audio ───────────────────
+    const onTrackUnsubscribed = (
+      track: RemoteTrack,
+      _publication: RemoteTrackPublication,
+      participant: RemoteParticipant
+    ) => {
+      if (track.kind !== Track.Kind.Audio) return;
+      track.detach(); // removes all attached <audio> elements from DOM
+      removeStream(participant.identity);
+      setPeers((prev) => prev.filter((p) => p.userId !== participant.identity));
+    };
 
-    if (isInitiator) {
-      pc.createOffer()
-        .then((offer) => pc.setLocalDescription(offer))
-        .then(() => {
-          socketManager.emit('webrtc:offer', {
-            targetUserId,
-            sdp: pc.localDescription,
-          });
-        });
-    }
+    // ── Event: participant leaves ───────────────────────────────────────
+    const onParticipantDisconnected = (participant: RemoteParticipant) => {
+      removeStream(participant.identity);
+      setPeers((prev) => prev.filter((p) => p.userId !== participant.identity));
+    };
 
-    return pc;
-  }, []);
+    // ── Event: speaking indicator ───────────────────────────────────────
+    const onActiveSpeakersChanged = (speakers: Participant[]) => {
+      const speakerIds = new Set(speakers.map((s) => s.identity));
+      setPeers((prev) => prev.map((p) => ({ ...p, speaking: speakerIds.has(p.userId) })));
+      setSpeakingUserIds(speakerIds);
+    };
 
-  const closePeer = useCallback((userId: string) => {
-    peerConnections.current.get(userId)?.close();
-    peerConnections.current.delete(userId);
-    audioRefs.current.get(userId)?.remove();
-    audioRefs.current.delete(userId);
-    setPeers((prev) => prev.filter((p) => p.userId !== userId));
-  }, []);
+    room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+    room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+    room.on(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
+    room.on(RoomEvent.Connected, () => setConnected(true));
+    room.on(RoomEvent.Disconnected, () => setConnected(false));
 
-  // Start voice when joining a session
-  useEffect(() => {
-    if (!activeSession) return;
+    // ── Fetch token from backend, then connect ──────────────────────────
+    const connect = async () => {
+      try {
+        // Session voice room when inside a session; global lobby otherwise.
+        const { data } = await (activeSession
+          ? api.post<{ token: string; url: string }>(
+              `/api/sessions/${activeSession.id}/voice-token`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+          : api.get<{ token: string; url: string }>('/api/voice/lobby-token', {
+              headers: { Authorization: `Bearer ${token}` },
+            }));
 
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: false })
-      .then((stream) => {
-        localStream.current = stream;
+        if (cancelled) return;
 
-        // Initiate connections to all current participants
-        participants.forEach((p) => {
-          if (p.userId !== activeSession.hostId) {
-            createPeer(p.userId, true);
+        await room.connect(data.url, data.token);
+
+        if (cancelled) return;
+
+        // Guarantee the AudioContext is running before any audio nodes are
+        // created. Chrome creates AudioContext in suspended state when outside
+        // a direct gesture handler; awaiting resume() here ensures the spatial
+        // audio graph works as soon as the first track is subscribed.
+        await ensureSpatialAudioContextRunning();
+
+        // Start publishing microphone — must happen before the manual track
+        // loop below so that any error in audio-graph setup does not prevent
+        // this participant from being able to speak.
+        await room.localParticipant.setMicrophoneEnabled(true);
+
+        // After connecting, process any tracks that were already subscribed
+        // by participants who joined before us. LiveKit fires TrackSubscribed
+        // during the connection handshake, but iterating explicitly here
+        // guarantees we never miss a track regardless of event timing.
+        // We track processed participant identities to avoid double-processing
+        // tracks that the TrackSubscribed event already handled above.
+        const processedIds = new Set(peers.map((p) => p.userId));
+        for (const participant of room.remoteParticipants.values()) {
+          if (processedIds.has(participant.identity)) continue;
+          for (const publication of participant.trackPublications.values()) {
+            if (
+              publication.kind === Track.Kind.Audio &&
+              publication.isSubscribed &&
+              publication.track
+            ) {
+              onTrackSubscribed(
+                publication.track as RemoteTrack,
+                publication as RemoteTrackPublication,
+                participant
+              );
+            }
           }
-        });
-      })
-      .catch(() => setError('Microphone permission denied'));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to connect to voice chat');
+        }
+      }
+    };
 
+    void connect();
+
+    // ── Cleanup on session exit ─────────────────────────────────────────
     return () => {
-      // Clean up everything on session exit
-      peerConnections.current.forEach((_, uid) => closePeer(uid));
-      localStream.current?.getTracks().forEach((t) => t.stop());
-      localStream.current = null;
+      cancelled = true;
+      room.off(RoomEvent.TrackSubscribed, onTrackSubscribed);
+      room.off(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+      room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+      room.off(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
+
+      // Disconnect cleans up all WebRTC internals inside LiveKit
+      void room.disconnect();
+      roomRef.current = null;
       setPeers([]);
+      setConnected(false);
+      setError(null);
+      setSpeakingUserIds(new Set());
     };
-  }, [activeSession?.id]); // eslint-disable-line
+  }, [activeSession?.id ?? 'lobby', token]); // eslint-disable-line
 
-  // Socket signal handlers
-  useEffect(() => {
-    const socket = socketManager.instance;
-    if (!socket) return;
+  // ─── Mute / unmute local mic ────────────────────────────────────────────
+  const toggleMute = useCallback(async () => {
+    const room = roomRef.current;
+    if (!room) return;
+    // Guaranteed user gesture — unlock the AudioContext if still suspended
+    resumeSpatialAudioContext();
+    const next = !muted;
+    await room.localParticipant.setMicrophoneEnabled(!next);
+    setMuted(next);
+  }, [muted]);
 
-    const onOffer = async ({
-      fromUserId,
-      sdp,
-    }: {
-      fromUserId: string;
-      sdp: RTCSessionDescriptionInit;
-    }) => {
-      const pc = createPeer(fromUserId, false);
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socketManager.emit('webrtc:answer', { targetUserId: fromUserId, sdp: pc.localDescription });
-    };
-
-    const onAnswer = async ({
-      fromUserId,
-      sdp,
-    }: {
-      fromUserId: string;
-      sdp: RTCSessionDescriptionInit;
-    }) => {
-      const pc = peerConnections.current.get(fromUserId);
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-    };
-
-    const onIce = async ({
-      fromUserId,
-      candidate,
-    }: {
-      fromUserId: string;
-      candidate: RTCIceCandidateInit;
-    }) => {
-      const pc = peerConnections.current.get(fromUserId);
-      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    };
-
-    const onUserDisconnected = (userId: string) => closePeer(userId);
-
-    socket.on('webrtc:offer', onOffer);
-    socket.on('webrtc:answer', onAnswer);
-    socket.on('webrtc:ice-candidate', onIce);
-    socket.on('user_disconnected', onUserDisconnected);
-
-    return () => {
-      socket.off('webrtc:offer', onOffer);
-      socket.off('webrtc:answer', onAnswer);
-      socket.off('webrtc:ice-candidate', onIce);
-      socket.off('user_disconnected', onUserDisconnected);
-    };
-  }, [createPeer, closePeer]);
-
-  const toggleMute = useCallback(() => {
-    if (!localStream.current) return;
-    const track = localStream.current.getAudioTracks()[0];
-    if (!track) return;
-    track.enabled = !track.enabled;
-    setMuted(!track.enabled);
-  }, []);
-
-  return { muted, toggleMute, peers, error };
+  return { muted, toggleMute, peers, connected, error };
 }
