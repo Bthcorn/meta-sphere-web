@@ -20,23 +20,33 @@ export function useSession() {
     const socket = socketManager.instance;
     if (!socket) return;
 
-    const invalidate = () => {
-      qc.invalidateQueries({
-        queryKey: ['sessions', 'participants', activeSession.id],
-      });
+    const invalidateParticipants = () => {
+      if (activeSession) {
+        qc.invalidateQueries({ queryKey: ['sessions', 'participants', activeSession.id] });
+      }
+    };
+
+    const invalidateSessionList = () => {
+      qc.invalidateQueries({ queryKey: ['sessions', 'list', roomId] });
+      qc.invalidateQueries({ queryKey: ['sessions', 'single', roomId] });
     };
 
     // The backend emits user_connected / user_disconnected to the session room
     // whenever a participant joins or leaves (via switchUserRoom), so these
     // events cover both initial socket connections and session room switches.
-    socket.on('user_connected', invalidate);
-    socket.on('user_disconnected', invalidate);
+    socket.on('user_connected', invalidateParticipants);
+    socket.on('user_disconnected', invalidateParticipants);
+    // If your backend emits these on session state changes:
+    socket.on('session:started', invalidateSessionList);
+    socket.on('session:ended', invalidateSessionList);
 
     return () => {
-      socket.off('user_connected', invalidate);
-      socket.off('user_disconnected', invalidate);
+      socket.off('user_connected', invalidateParticipants);
+      socket.off('user_disconnected', invalidateParticipants);
+      socket.off('session:started', invalidateSessionList);
+      socket.off('session:ended', invalidateSessionList);
     };
-  }, [activeSession, qc]);
+  }, [activeSession, qc, roomId]);
 
   // ── Session list (multi mode) ────────────────────────────────────────────
   const { data: sessionList = [], isLoading: listLoading } = useQuery({
@@ -46,7 +56,8 @@ export function useSession() {
         .list({ roomId: roomId! })
         .then((all) => all.filter((s) => s.status === 'SCHEDULED' || s.status === 'ACTIVE')),
     enabled: !!roomId && mode === 'multi',
-    refetchInterval: 5000,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
 
   // ── Single active session (single mode) ──────────────────────────────────
@@ -57,7 +68,8 @@ export function useSession() {
         .list({ roomId: roomId! })
         .then((all) => all.find((s) => s.status === 'SCHEDULED' || s.status === 'ACTIVE') ?? null),
     enabled: !!roomId && mode === 'single',
-    refetchInterval: 5000,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
 
   // ── Participants ─────────────────────────────────────────────────────────
@@ -65,7 +77,7 @@ export function useSession() {
     queryKey: ['sessions', 'participants', activeSession?.id],
     queryFn: () => sessionsApi.getParticipants(activeSession!.id),
     enabled: !!activeSession,
-    refetchInterval: 1500, // safety-net poll — socket events handle the fast path
+    staleTime: 30_000,
     select: (data) => data.filter((p) => p.status === 'ACTIVE'),
   });
 
