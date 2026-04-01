@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber';
+import { SafeCanvas } from '@/components/space/safe-canvas';
 import { Sky } from '@react-three/drei';
 import { Physics, RigidBody } from '@react-three/rapier';
 
@@ -58,15 +58,7 @@ interface Props {
 
 export function MeetingRoomScene({ lockEnabled = true }: Props) {
   return (
-    <Canvas
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
-      onCreated={({ gl }) => {
-        gl.domElement.addEventListener('webglcontextlost', (e) => {
-          e.preventDefault();
-        });
-      }}
-    >
+    <SafeCanvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
       <ambientLight intensity={0.55} />
       <directionalLight position={[5, 12, 8]} intensity={1.1} castShadow />
       <Sky sunPosition={[100, 20, 100]} />
@@ -86,6 +78,6 @@ export function MeetingRoomScene({ lockEnabled = true }: Props) {
         <Player position={SPAWN} lockEnabled={lockEnabled} />
         <RemotePlayers />
       </Physics>
-    </Canvas>
+    </SafeCanvas>
   );
 }

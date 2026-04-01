@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import {
   KeyboardControls,
   useKeyboardControls,
@@ -24,6 +24,29 @@ type PlayerProps = {
   position?: [number, number, number];
   lockEnabled?: boolean;
 };
+
+/**
+ * Thin wrapper around drei's PointerLockControls that exits pointer lock
+ * on unmount before the canvas element is removed from the DOM.
+ * Without this, the browser throws WrongDocumentError when the document
+ * click handler (added by drei) fires requestPointerLock() on a stale,
+ * already-removed canvas element.
+ */
+function SafePointerLockControls() {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    return () => {
+      // Release pointer lock synchronously so that by the time React removes
+      // the canvas element from the DOM, no pointer-lock request is pending.
+      if (document.pointerLockElement === gl.domElement) {
+        document.exitPointerLock();
+      }
+    };
+  }, [gl]);
+
+  return <PointerLockControls />;
+}
 
 /** Matches ~2u Rapier capsule (halfHeight 0.5, radius 0.5); feet near y = -1 in body space. */
 const LOCAL_AVATAR_SCALE = 1.45;
@@ -125,7 +148,7 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
 
       <group>
         <PerspectiveCamera makeDefault position={[0, 0.75, 0]} fov={60} near={0.6} />
-        <PointerLockControls enabled={lockEnabled} />
+        <SafePointerLockControls />
       </group>
       <group
         ref={avatarOrientationRef}
