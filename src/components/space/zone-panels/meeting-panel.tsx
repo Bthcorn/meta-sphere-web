@@ -88,14 +88,14 @@ export function MeetingPanel() {
                     {count} {count === 1 ? 'person' : 'people'} · {s.status.toLowerCase()}
                   </p>
                 </div>
-                {s.status === 'ACTIVE' ? (
+                {s.status === 'ACTIVE' || (s.status === 'SCHEDULED' && isHost) ? (
                   <button
                     onClick={() => handleJoin(s)}
                     disabled={isPending}
                     className='ml-3 shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium
                                text-white transition hover:bg-blue-500 disabled:opacity-40'
                   >
-                    Join
+                    {s.status === 'SCHEDULED' ? 'Join & start' : 'Join'}
                   </button>
                 ) : (
                   <span

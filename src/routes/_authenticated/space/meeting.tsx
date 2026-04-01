@@ -31,9 +31,10 @@ function MeetingPage() {
   // Subscribe to whiteboard room so drawing indicators work even when panel is closed
   useWhiteboardPresence(activeSession?.id ?? '');
 
-  // Go back to campus when the session ends or user leaves
+  // Go back to campus when the session ends, user leaves, or if a SOCIAL
+  // session somehow lands here (SOCIAL sessions stay in /space).
   useEffect(() => {
-    if (!activeSession) {
+    if (!activeSession || activeSession.type === 'SOCIAL') {
       navigate({ to: '/space' });
     }
   }, [activeSession, navigate]);
