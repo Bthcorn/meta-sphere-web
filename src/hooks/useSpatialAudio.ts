@@ -149,9 +149,10 @@ export function useSpatialAudio() {
 
   // ─── Cleanup on unmount ──────────────────────────────────────────────────
   useEffect(() => {
+    const nodes = audioNodes.current;
     return () => {
-      for (const [userId] of audioNodes.current) {
-        removeStreamById(userId, audioNodes.current);
+      for (const [userId] of nodes) {
+        removeStreamById(userId, nodes);
       }
     };
   }, []);
