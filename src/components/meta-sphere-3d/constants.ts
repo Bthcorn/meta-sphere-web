@@ -38,7 +38,7 @@ export const AVATARS: AvatarConfig[] = Array.from({ length: AVATAR_COUNT }, (_, 
 // ── Spawn ──────────────────────────────────────────────────────────────────
 /** Default world-space spawn position — used for both the local player and
  *  remote players whose position hasn't been received yet. */
-export const DEFAULT_SPAWN: [number, number, number] = [-10, 1, 3.75];
+export const DEFAULT_SPAWN: [number, number, number] = [-10, 1, 14];
 
 // ── Screens ────────────────────────────────────────────────────────────────
 
