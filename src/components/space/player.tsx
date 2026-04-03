@@ -9,6 +9,7 @@ import {
 import * as THREE from 'three';
 import { RigidBody, RapierRigidBody, CapsuleCollider } from '@react-three/rapier';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
+import { useSessionStore } from '@/store/session.store';
 import { useAuthStore } from '@/store/auth.store';
 import { PlayerAvatar } from '@/components/avatar/player-avatar';
 import { AVATAR_OPTIONS, useAvatarStore } from '@/store/avatar.store';
@@ -60,6 +61,14 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
   const avatarColorId = useAvatarStore((s) => s.avatarId);
   const skinTint =
     avatarColorId != null ? AVATAR_OPTIONS.find((o) => o.id === avatarColorId)?.color : undefined;
+  const currentZoneConfig = useSessionStore((s) => s.currentZoneConfig);
+
+  // Release mouse when a zone panel opens and keep it free while the panel is visible.
+  useEffect(() => {
+    if (currentZoneConfig) {
+      document.exitPointerLock();
+    }
+  }, [currentZoneConfig]);
 
   // Pre-allocated per-instance temporaries to avoid GC pressure each frame
   const direction = new THREE.Vector3();
@@ -87,9 +96,9 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
 
     if (!rbRef.current) return;
 
-    // When a panel is open (chat, whiteboard, zone), keyboard input belongs to the UI —
-    // halt the player so WASD keystrokes don't drive movement while the user is typing.
-    if (!lockEnabled) {
+    // When a panel is open (chat, zone panel) halt the player so WASD doesn't
+    // drive movement while the user is reading / interacting with the UI.
+    if (!lockEnabled || currentZoneConfig) {
       const linvel = rbRef.current.linvel();
       rbRef.current.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
       return;
@@ -148,7 +157,9 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
 
       <group>
         <PerspectiveCamera makeDefault position={[0, 0.75, 0]} fov={60} near={0.6} />
-        <SafePointerLockControls />
+        {/* Unmount PointerLockControls while a zone panel is open so clicking
+            the canvas doesn't accidentally re-lock the mouse. */}
+        {!currentZoneConfig && <SafePointerLockControls />}
       </group>
       <group
         ref={avatarOrientationRef}

@@ -15,7 +15,7 @@ const COMMON_ZONE = ZONE_CONFIG.zone_chilling;
 
 /** Derives the current chat context from session/zone state. */
 function useChatContext() {
-  const { activeSession, currentZoneConfig } = useSessionStore();
+  const { activeSession, currentZoneConfig, currentAreaZone } = useSessionStore();
 
   if (activeSession) {
     return {
@@ -27,9 +27,10 @@ function useChatContext() {
     };
   }
 
-  // Use the explicit zone the player walked into, or fall back to the common
-  // area (chilling room) which covers both the spawn point and chilling zone.
-  const zone = currentZoneConfig ?? COMMON_ZONE;
+  // Use the physical area the player is standing in (whole-room sensor), not the
+  // panel trigger zone — so chat switches when you walk into a new area regardless
+  // of whether you've opened the zone panel.
+  const zone = currentAreaZone ?? COMMON_ZONE;
 
   return {
     type: 'room' as const,

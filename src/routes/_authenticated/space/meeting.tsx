@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useSessionStore } from '@/store/session.store';
+import { useSessionFilesStore } from '@/store/session-files.store';
 import { useSession } from '@/hooks/useSession';
 import { useSpaceEntry } from '@/hooks/useSpaceEntry';
 import { MeetingRoomScene } from './-components/meeting-room-scene';
@@ -13,6 +14,7 @@ import { PresenceDebug } from './-components/presence-debug';
 import { WhiteboardPanel } from '@/components/whiteboard/whiteboard-panel';
 import { WhiteboardToggle } from '@/components/whiteboard/whiteboard-toggle';
 import { useWhiteboardPresence } from '@/hooks/useWhiteboardPresence';
+import { FileTray } from '@/components/session/file-tray';
 
 export const Route = createFileRoute('/_authenticated/space/meeting')({
   component: MeetingPage,
@@ -21,8 +23,22 @@ export const Route = createFileRoute('/_authenticated/space/meeting')({
 function MeetingPage() {
   const navigate = useNavigate();
   const activeSession = useSessionStore((s) => s.activeSession);
+  const trayOpen = useSessionFilesStore((s) => s.trayOpen);
   const [chatOpen, setChatOpen] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
+
+  // On mount: clear stale zone/tray state that persists across navigation.
+  // currentZoneConfig being non-null prevents SafePointerLockControls from
+  // mounting inside Player, making pointer lock permanently unavailable.
+  // On unmount: clear area so VoiceBar falls back to "Common Area" after leaving
+  // (the physics scene unmounts without firing onIntersectionExit).
+  useEffect(() => {
+    useSessionStore.getState().exitZone();
+    useSessionFilesStore.getState().closeTray();
+    return () => {
+      useSessionStore.getState().exitArea();
+    };
+  }, []);
 
   // Keep participants fresh
   useSession();
@@ -41,18 +57,18 @@ function MeetingPage() {
 
   // Exit pointer lock when any panel opens
   useEffect(() => {
-    if (chatOpen || whiteboardOpen) document.exitPointerLock();
-  }, [chatOpen, whiteboardOpen]);
+    if (chatOpen || whiteboardOpen || trayOpen) document.exitPointerLock();
+  }, [chatOpen, whiteboardOpen, trayOpen]);
 
   // Guard: if pointer lock is somehow re-acquired while a panel is open, release it immediately
   useEffect(() => {
-    if (!chatOpen && !whiteboardOpen) return;
+    if (!chatOpen && !whiteboardOpen && !trayOpen) return;
     const onLockChange = () => {
       if (document.pointerLockElement) document.exitPointerLock();
     };
     document.addEventListener('pointerlockchange', onLockChange);
     return () => document.removeEventListener('pointerlockchange', onLockChange);
-  }, [chatOpen, whiteboardOpen]);
+  }, [chatOpen, whiteboardOpen, trayOpen]);
 
   if (!activeSession) return null;
 
@@ -84,12 +100,15 @@ function MeetingPage() {
       {/* Voice controls at the bottom */}
       <VoiceBar />
 
+      {/* File tray — bottom right, left of whiteboard/chat toggles */}
+      <FileTray sessionId={activeSession.id} />
+
       <Crosshair />
 
       {import.meta.env.DEV && <PresenceDebug />}
 
       {/* 3-D meeting room — fills the whole viewport */}
-      <MeetingRoomScene lockEnabled={!whiteboardOpen && !chatOpen} />
+      <MeetingRoomScene lockEnabled={!whiteboardOpen && !chatOpen && !trayOpen} />
     </div>
   );
 }
