@@ -5,7 +5,7 @@ import { MicIcon, MicOffIcon, Volume2Icon } from 'lucide-react';
 
 export function VoiceBar() {
   const { muted, toggleMute, peers, connected, error } = useVoice();
-  const { participants, activeSession } = useSessionStore();
+  const { participants, activeSession, currentAreaZone } = useSessionStore();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   // Exclude self from participant display
@@ -20,7 +20,7 @@ export function VoiceBar() {
     >
       {/* Room label — session name or "Common Area" for the lobby */}
       <span className='text-[10px] font-semibold uppercase tracking-widest text-white/30'>
-        {activeSession ? activeSession.title : 'Common Area'}
+        {activeSession ? activeSession.title : (currentAreaZone?.label ?? 'Common Area')}
       </span>
 
       <div className='h-4 w-px bg-white/10' />

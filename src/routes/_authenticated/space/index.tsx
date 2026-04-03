@@ -29,7 +29,7 @@ function SpaceIndex() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [chatOpen, setChatOpen] = useState(false);
-  const { currentZoneConfig, activeSession } = useSessionStore();
+  const { activeSession } = useSessionStore();
 
   const campusHeight = 7;
 
@@ -43,9 +43,8 @@ function SpaceIndex() {
   }, [activeSession, navigate]);
 
   useEffect(() => {
-    const panelOpen = !!currentZoneConfig || chatOpen;
-    if (panelOpen) document.exitPointerLock();
-  }, [currentZoneConfig, chatOpen]);
+    if (chatOpen) document.exitPointerLock();
+  }, [chatOpen]);
 
   useSpaceEntry();
 
@@ -161,7 +160,7 @@ function SpaceIndex() {
           <Common position={[-10, 0, 7.5]} width={20} depth={15} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
-          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !currentZoneConfig} />
+          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen} />
           <RemotePlayers />
         </Physics>
       </SafeCanvas>

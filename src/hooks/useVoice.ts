@@ -25,7 +25,7 @@ interface PeerState {
 }
 
 export function useVoice() {
-  const { activeSession } = useSessionStore();
+  const { activeSession, currentAreaZone } = useSessionStore();
   const token = useAuthStore((s) => s.token);
 
   const [muted, setMuted] = useState(false);
@@ -124,16 +124,22 @@ export function useVoice() {
     // ── Fetch token from backend, then connect ──────────────────────────
     const connect = async () => {
       try {
-        // Session voice room when inside a session; global lobby otherwise.
+        // Session voice room when inside a session; area-specific room when
+        // standing in a named area (library, chill zone, etc.); global lobby otherwise.
         const { data } = await (activeSession
           ? api.post<{ token: string; url: string }>(
               `/api/sessions/${activeSession.id}/voice-token`,
               {},
               { headers: { Authorization: `Bearer ${token}` } }
             )
-          : api.get<{ token: string; url: string }>('/api/voice/lobby-token', {
-              headers: { Authorization: `Bearer ${token}` },
-            }));
+          : currentAreaZone
+            ? api.get<{ token: string; url: string }>(
+                `/api/voice/area-token?roomId=${currentAreaZone.roomId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              )
+            : api.get<{ token: string; url: string }>('/api/voice/lobby-token', {
+                headers: { Authorization: `Bearer ${token}` },
+              }));
 
         if (cancelled) return;
 
@@ -200,7 +206,7 @@ export function useVoice() {
       setError(null);
       setSpeakingUserIds(new Set());
     };
-  }, [activeSession?.id ?? 'lobby', token]); // eslint-disable-line
+  }, [activeSession?.id ?? null, currentAreaZone?.roomId ?? null, token]); // eslint-disable-line
 
   // ─── Mute / unmute local mic ────────────────────────────────────────────
   const toggleMute = useCallback(async () => {

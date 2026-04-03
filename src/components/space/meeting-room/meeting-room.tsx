@@ -13,7 +13,7 @@ type MeetingRoomProps = ThreeElements['group'] & {
 };
 
 export function MeetingRoom({ width, depth, zoneKey, noTrigger, ...props }: MeetingRoomProps) {
-  const { enterZone, exitZone } = useSessionStore();
+  const { enterZone, exitZone, enterArea, exitArea } = useSessionStore();
   const config = ZONE_CONFIG[zoneKey];
 
   return (
@@ -24,8 +24,14 @@ export function MeetingRoom({ width, depth, zoneKey, noTrigger, ...props }: Meet
         <RigidBody
           type='fixed'
           sensor
-          onIntersectionEnter={() => enterZone(zoneKey, config)}
-          onIntersectionExit={() => exitZone()}
+          onIntersectionEnter={() => {
+            enterZone(zoneKey, config);
+            enterArea(config);
+          }}
+          onIntersectionExit={() => {
+            exitZone();
+            exitArea();
+          }}
         >
           <CuboidCollider args={[width / 2 - 0.5, 3, depth / 2 - 0.5]} position={[0, 1.5, 0]} />
         </RigidBody>
