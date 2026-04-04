@@ -28,13 +28,6 @@ export function MeetingFurniture({ room = 'A', ...props }: MeetingFurnitureProps
     <group {...props}>
       {/* --- PRESENTATION SCREEN & BIAS LIGHTS --- */}
       <Screen position={[0, 4.5, -8.5]} />
-      <pointLight
-        position={[0, 4.5, -9.4]}
-        intensity={200}
-        distance={6}
-        decay={3}
-        color='#00bfff'
-      />
 
       {/* --- CLOCK --- */}
       {/* Positioned high on the wall opposite the screen (z = 7.4) */}
@@ -50,9 +43,9 @@ export function MeetingFurniture({ room = 'A', ...props }: MeetingFurnitureProps
 
       {/* --- WHITEBOARD --- */}
       {room === 'A' ? (
-        <Whiteboard position={[-4.2, 3, 0]} rotation={[-Math.PI, 0, -Math.PI / 2]} scale={1.75} />
+        <Whiteboard position={[-4.5, 3, 0]} rotation={[-Math.PI, 0, -Math.PI / 2]} scale={1.75} />
       ) : (
-        <Whiteboard position={[4.2, 3, 0]} rotation={[-Math.PI, 0, Math.PI / 2]} scale={1.75} />
+        <Whiteboard position={[4.5, 3, 0]} rotation={[-Math.PI, 0, Math.PI / 2]} scale={1.75} />
       )}
 
       {/* Table */}
