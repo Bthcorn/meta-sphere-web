@@ -4,21 +4,32 @@ import { MeetingFurniture } from './meeting-furniture';
 import { useSessionStore } from '@/store/session.store';
 import { ZONE_CONFIG, type ZoneKey } from '@/config/zone-sessions';
 
+// --- ADDED THE `room` PROP HERE ---
 type MeetingRoomProps = ThreeElements['group'] & {
   width: number;
   depth: number;
   zoneKey: ZoneKey;
+  room?: 'A' | 'B';
   /** Pass true to skip the internal zone-trigger sensor (e.g. when the room is sealed). */
   noTrigger?: boolean;
 };
 
-export function MeetingRoom({ width, depth, zoneKey, noTrigger, ...props }: MeetingRoomProps) {
+// --- GRABBED `room` FROM THE PROPS ---
+export function MeetingRoom({
+  width,
+  depth,
+  zoneKey,
+  noTrigger,
+  room = 'A',
+  ...props
+}: MeetingRoomProps) {
   const { enterZone, exitZone, enterArea, exitArea } = useSessionStore();
   const config = ZONE_CONFIG[zoneKey];
 
   return (
     <group {...props}>
-      <MeetingFurniture position={[0, 0, 0]} scale={0.85} />
+      {/* --- PASSED `room` DOWN TO THE FURNITURE --- */}
+      <MeetingFurniture position={[0, 0, 0]} scale={0.85} room={room} />
 
       {!noTrigger && (
         <RigidBody

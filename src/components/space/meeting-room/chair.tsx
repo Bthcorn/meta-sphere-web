@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 import type { GLTF } from 'three-stdlib';
@@ -26,6 +27,21 @@ type ChairProps = {
 
 export function Chair({ position, rotation, scale = 1 }: ChairProps) {
   const { nodes, materials } = useGLTF('/meeting_room.glb') as unknown as GLTFResult;
+
+  // Clone the fabric seat material
+  const darkGreyFabric = useMemo(() => {
+    const mat = materials.weaving3DFabric001.clone();
+    mat.color.set('#333333'); // Dark Grey
+    return mat;
+  }, [materials.weaving3DFabric001]);
+
+  // Clone the fabric backrest/mesh material
+  const darkGreyMesh = useMemo(() => {
+    const mat = materials.chair.clone();
+    mat.color.set('#333333'); // Dark Grey
+    return mat;
+  }, [materials.chair]);
+
   return (
     <RigidBody
       type='fixed'
@@ -35,14 +51,17 @@ export function Chair({ position, rotation, scale = 1 }: ChairProps) {
       colliders='cuboid'
     >
       <group scale={0.112}>
+        {/* Fabric Backrest updated to Dark Grey */}
         <mesh
           geometry={nodes.weaving3DAlanaOfficeChairFabricMesh001_chair_0.geometry}
-          material={materials.chair}
+          material={darkGreyMesh}
         />
+        {/* Fabric Seat updated to Dark Grey */}
         <mesh
           geometry={nodes.weaving3DAlanaOfficeChairFabricSeater001_weaving3DFabric001_0.geometry}
-          material={materials.weaving3DFabric001}
+          material={darkGreyFabric}
         />
+        {/* Plastic and Metal left exactly as they were */}
         <mesh
           geometry={nodes.weaving3DAlanaOfficeChairPlastic001_AlanaOfficeChairPlastic_0.geometry}
           material={materials.AlanaOfficeChairPlastic}

@@ -1,8 +1,13 @@
+import { useMemo } from 'react';
 import type { ThreeElements } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 
 import { MeetingRoom } from '@/components/space/meeting-room/meeting-room';
+
+// --- IMPORT YOUR DARK GREY FLOOR ---
+// Make sure this path matches wherever you saved the dark grey floor component!
+import { Model as MeetingFloor } from '@/components/space/meeting-room/Meeting_floor';
 
 type MeetingAreaProps = ThreeElements['group'] & {
   width: number;
@@ -46,6 +51,31 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
     />
   );
 
+  // --- NEW FLOOR TILING LOGIC ---
+  const columns = 4;
+  const rows = 7;
+  const scaleX = width / columns / 3.5;
+  const scaleZ = depth / rows / 3.5;
+
+  const tileData = useMemo(() => {
+    const tiles = [];
+    const tileW = width / columns;
+    const tileD = depth / rows;
+
+    for (let x = 0; x < columns; x++) {
+      for (let z = 0; z < rows; z++) {
+        const posX = x * tileW - width / 2 + tileW / 2;
+        const posZ = z * tileD - depth / 2 + tileD / 2;
+
+        tiles.push({
+          id: `${x}-${z}`,
+          position: [posX, 0.01, posZ] as [number, number, number],
+        });
+      }
+    }
+    return tiles;
+  }, [width, depth]);
+
   return (
     <group {...props}>
       <Text
@@ -56,11 +86,19 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Meeting Area
       </Text>
+
+      {/* --- NEW VISUAL TILED FLOOR --- */}
+      <group>
+        {tileData.map((tile) => (
+          <MeetingFloor key={tile.id} position={tile.position} scale={[scaleX, 1, scaleZ]} />
+        ))}
+      </group>
+
       <RigidBody type='fixed' colliders='cuboid'>
-        {/* Floor */}
-        <mesh position={[0, 0.05, 0]}>
+        {/* Invisible Base Physics Floor (Replaces the old solid blue one!) */}
+        <mesh position={[0, -0.05, 0]}>
           <boxGeometry args={[width, 0.1, depth]} />
-          <meshStandardMaterial color='#3b82f6' />
+          <meshStandardMaterial color='#111111' transparent opacity={0} />
         </mesh>
 
         {/* --- BACK WALL (Restored to solid) --- */}
@@ -121,6 +159,7 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {glassMaterial}
         </mesh>
       </RigidBody>
+
       <Text
         position={[leftGlassX + 0.2, roomDoorHeight + 0.4, doorZ]}
         fontSize={0.8}
@@ -137,17 +176,23 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Room B
       </Text>
+
+      {/* --- PASSED ROOM A PROP --- */}
       <MeetingRoom
         position={[-(corridorWidth / 2 + roomWidth / 2), 0, 0]}
         width={roomWidth}
         depth={depth}
         zoneKey='zone_meeting_a'
+        room='A'
       />
+
+      {/* --- PASSED ROOM B PROP --- */}
       <MeetingRoom
         position={[corridorWidth / 2 + roomWidth / 2, 0, 0]}
         width={roomWidth}
         depth={depth}
         zoneKey='zone_meeting_b'
+        room='B'
       />
     </group>
   );
