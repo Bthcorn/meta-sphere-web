@@ -33,6 +33,14 @@ vi.mock('@/store/space-presence.store', () => ({
   },
 }));
 
+const mockClearStream = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/screen-share.store', () => ({
+  useScreenShareStore: {
+    getState: vi.fn(() => ({ clearStream: mockClearStream })),
+  },
+}));
+
 const mockApi = vi.mocked(sessionsApi);
 
 // ---------------------------------------------------------------------------
@@ -93,9 +101,9 @@ function createWrapper() {
 describe('useSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClearStream.mockReset();
     useSessionStore.getState().exitZone();
     useSessionStore.getState().setActiveSession(null);
-    // Prevent open handles from participant polling
     mockApi.getParticipants.mockResolvedValue([]);
   });
 
@@ -184,6 +192,21 @@ describe('useSession', () => {
       expect(mockApi.leave).toHaveBeenCalledWith('session-1');
       expect(useSessionStore.getState().activeSession).toBeNull();
     });
+
+    it('clears screen share stream on leave', async () => {
+      useSessionStore.getState().setActiveSession(mockSession);
+      useSessionStore.getState().enterZone('zone_meeting_a', multiZoneConfig);
+      mockApi.list.mockResolvedValue([mockSession]);
+      mockApi.leave.mockResolvedValue({ message: 'Left' });
+
+      const { result } = renderHook(() => useSession(), { wrapper: createWrapper() });
+
+      await act(async () => {
+        await result.current.leaveSession.mutateAsync();
+      });
+
+      expect(mockClearStream).toHaveBeenCalled();
+    });
   });
 
   describe('startSession mutation', () => {
@@ -239,6 +262,22 @@ describe('useSession', () => {
 
       expect(mockApi.end).toHaveBeenCalledWith('session-1');
       expect(useSessionStore.getState().activeSession).toBeNull();
+    });
+
+    it('clears screen share stream on end', async () => {
+      const endedSession = { ...mockSession, status: 'ENDED' as const };
+      useSessionStore.getState().setActiveSession(mockSession);
+      useSessionStore.getState().enterZone('zone_meeting_a', multiZoneConfig);
+      mockApi.list.mockResolvedValue([mockSession]);
+      mockApi.end.mockResolvedValue(endedSession);
+
+      const { result } = renderHook(() => useSession(), { wrapper: createWrapper() });
+
+      await act(async () => {
+        await result.current.endSession.mutateAsync('session-1');
+      });
+
+      expect(mockClearStream).toHaveBeenCalled();
     });
   });
 
