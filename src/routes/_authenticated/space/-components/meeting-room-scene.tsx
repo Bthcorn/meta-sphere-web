@@ -5,12 +5,13 @@ import { Physics, RigidBody } from '@react-three/rapier';
 import { Player } from '@/components/space/player';
 import { RemotePlayers } from '@/components/space/remote-player';
 import { MeetingFurniture } from '@/components/space/meeting-room/meeting-furniture';
-
-const ROOM_WIDTH = 8.5;
-const ROOM_DEPTH = 15;
-const WALL_H = 7;
-const WALL_T = 0.5;
-
+import { MeetingFloorTiles } from '@/components/space/meeting-room/meeting-floor-tiles';
+import {
+  MEETING_ROOM_DEPTH,
+  MEETING_ROOM_WIDTH,
+  MEETING_WALL_HEIGHT,
+  MEETING_WALL_THICKNESS,
+} from '@/components/space/meeting-room/meeting-room';
 // Spawn near the front wall, clear of the table and chairs
 const SPAWN: [number, number, number] = [0, 1, 5.5];
 
@@ -18,37 +19,42 @@ function RoomGeometry() {
   const solid = <meshStandardMaterial color='#4b5563' />;
 
   return (
-    <RigidBody type='fixed' colliders='cuboid'>
-      {/* Floor */}
-      <mesh position={[0, 0.05, 0]}>
-        <boxGeometry args={[ROOM_WIDTH, 0.1, ROOM_DEPTH]} />
-        <meshStandardMaterial color='#3b82f6' />
-      </mesh>
+    <>
+      {/* Same tiled floor as `Meeting` (4×7 grid, Meeting_floor model). */}
+      <MeetingFloorTiles width={MEETING_ROOM_WIDTH} depth={MEETING_ROOM_DEPTH} />
 
-      {/* Back wall */}
-      <mesh position={[0, WALL_H / 2, -ROOM_DEPTH / 2]}>
-        <boxGeometry args={[ROOM_WIDTH, WALL_H, WALL_T]} />
-        {solid}
-      </mesh>
+      <RigidBody type='fixed' colliders='cuboid'>
+        {/* Invisible physics floor — top at y = 0, matches `Meeting` */}
+        <mesh position={[0, -0.05, 0]}>
+          <boxGeometry args={[MEETING_ROOM_WIDTH, 0.1, MEETING_ROOM_DEPTH]} />
+          <meshStandardMaterial color='#111111' transparent opacity={0} />
+        </mesh>
 
-      {/* Left wall */}
-      <mesh position={[-ROOM_WIDTH / 2, WALL_H / 2, 0]}>
-        <boxGeometry args={[WALL_T, WALL_H, ROOM_DEPTH]} />
-        {solid}
-      </mesh>
+        {/* Back wall */}
+        <mesh position={[0, MEETING_WALL_HEIGHT / 2, -MEETING_ROOM_DEPTH / 2]}>
+          <boxGeometry args={[MEETING_ROOM_WIDTH, MEETING_WALL_HEIGHT, MEETING_WALL_THICKNESS]} />
+          {solid}
+        </mesh>
 
-      {/* Right wall */}
-      <mesh position={[ROOM_WIDTH / 2, WALL_H / 2, 0]}>
-        <boxGeometry args={[WALL_T, WALL_H, ROOM_DEPTH]} />
-        {solid}
-      </mesh>
+        {/* Left wall */}
+        <mesh position={[-MEETING_ROOM_WIDTH / 2, MEETING_WALL_HEIGHT / 2, 0]}>
+          <boxGeometry args={[MEETING_WALL_THICKNESS, MEETING_WALL_HEIGHT, MEETING_ROOM_DEPTH]} />
+          {solid}
+        </mesh>
 
-      {/* Front wall — solid, no door */}
-      <mesh position={[0, WALL_H / 2, ROOM_DEPTH / 2]}>
-        <boxGeometry args={[ROOM_WIDTH, WALL_H, WALL_T]} />
-        {solid}
-      </mesh>
-    </RigidBody>
+        {/* Right wall */}
+        <mesh position={[MEETING_ROOM_WIDTH / 2, MEETING_WALL_HEIGHT / 2, 0]}>
+          <boxGeometry args={[MEETING_WALL_THICKNESS, MEETING_WALL_HEIGHT, MEETING_ROOM_DEPTH]} />
+          {solid}
+        </mesh>
+
+        {/* Front wall — solid, no door */}
+        <mesh position={[0, MEETING_WALL_HEIGHT / 2, MEETING_ROOM_DEPTH / 2]}>
+          <boxGeometry args={[MEETING_ROOM_WIDTH, MEETING_WALL_HEIGHT, MEETING_WALL_THICKNESS]} />
+          {solid}
+        </mesh>
+      </RigidBody>
+    </>
   );
 }
 
@@ -59,8 +65,8 @@ interface Props {
 export function MeetingRoomScene({ lockEnabled = true }: Props) {
   return (
     <SafeCanvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[5, 12, 8]} intensity={1.1} castShadow />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[20, 30, 20]} intensity={1} />
       <Sky sunPosition={[100, 20, 100]} />
 
       <Physics>
@@ -73,6 +79,7 @@ export function MeetingRoomScene({ lockEnabled = true }: Props) {
         </RigidBody>
 
         <RoomGeometry />
+
         <MeetingFurniture position={[0, 0, 0]} scale={0.85} />
 
         <Player position={SPAWN} lockEnabled={lockEnabled} />

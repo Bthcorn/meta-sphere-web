@@ -6,27 +6,23 @@ import type { ThreeElements } from '@react-three/fiber';
 
 type GLTFResult = GLTF & {
   nodes: {
-    Tv1: THREE.Mesh;
+    Analog_Cock: THREE.Mesh;
   };
   materials: {
-    Tv1: THREE.MeshStandardMaterial;
+    Mat: THREE.MeshStandardMaterial;
   };
 };
 
 export function Model(props: ThreeElements['group']) {
-  const { nodes, materials } = useGLTF('/tv.glb') as unknown as GLTFResult;
+  const { nodes, materials } = useGLTF('/clock.glb') as unknown as GLTFResult;
+
   return (
     <group {...props} dispose={null}>
       <RigidBody type='fixed' colliders='hull'>
-        <mesh
-          geometry={nodes.Tv1.geometry}
-          material={materials.Tv1}
-          rotation={[-Math.PI / 2, 0, 0]}
-          scale={300}
-        />
+        <mesh geometry={nodes.Analog_Cock.geometry} material={materials.Mat} />
       </RigidBody>
     </group>
   );
 }
 
-useGLTF.preload('/tv.glb');
+useGLTF.preload('/clock.glb');

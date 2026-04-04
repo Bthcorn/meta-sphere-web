@@ -3,6 +3,7 @@ import { Text } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 
 import { MeetingRoom } from '@/components/space/meeting-room/meeting-room';
+import { MeetingFloorTiles } from '@/components/space/meeting-room/meeting-floor-tiles';
 
 type MeetingAreaProps = ThreeElements['group'] & {
   width: number;
@@ -56,11 +57,14 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Meeting Area
       </Text>
+
+      <MeetingFloorTiles width={width} depth={depth} />
+
       <RigidBody type='fixed' colliders='cuboid'>
-        {/* Floor */}
-        <mesh position={[0, 0.05, 0]}>
+        {/* Invisible Base Physics Floor (Replaces the old solid blue one!) */}
+        <mesh position={[0, -0.05, 0]}>
           <boxGeometry args={[width, 0.1, depth]} />
-          <meshStandardMaterial color='#3b82f6' />
+          <meshStandardMaterial color='#111111' transparent opacity={0} />
         </mesh>
 
         {/* --- BACK WALL (Restored to solid) --- */}
@@ -121,6 +125,7 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
           {glassMaterial}
         </mesh>
       </RigidBody>
+
       <Text
         position={[leftGlassX + 0.2, roomDoorHeight + 0.4, doorZ]}
         fontSize={0.8}
@@ -137,17 +142,23 @@ export function Meeting({ width, depth, ...props }: MeetingAreaProps) {
       >
         Room B
       </Text>
+
+      {/* --- PASSED ROOM A PROP --- */}
       <MeetingRoom
         position={[-(corridorWidth / 2 + roomWidth / 2), 0, 0]}
         width={roomWidth}
         depth={depth}
         zoneKey='zone_meeting_a'
+        room='A'
       />
+
+      {/* --- PASSED ROOM B PROP --- */}
       <MeetingRoom
         position={[corridorWidth / 2 + roomWidth / 2, 0, 0]}
         width={roomWidth}
         depth={depth}
         zoneKey='zone_meeting_b'
+        room='B'
       />
     </group>
   );
