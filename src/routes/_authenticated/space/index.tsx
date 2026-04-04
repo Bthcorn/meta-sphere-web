@@ -17,9 +17,13 @@ import { Crosshair } from '@/components/space/crosshair';
 import { ZonePanel } from '@/components/space/zone-panel';
 import { useEffect, useState } from 'react';
 import { useSessionStore } from '@/store/session.store';
+import { ZONE_CONFIG } from '@/config/zone-sessions';
 import { ChatToggle } from '@/components/space/chat/chat-toggle';
 import { ChatPanel } from '@/components/space/chat/chat-panel';
 import { VoiceBar } from '@/components/space/voice/voice-bar';
+import { BookmarksToggle } from '@/components/library/bookmarks-toggle';
+import { BookmarksPanel } from '@/components/library/bookmarks-panel';
+import { useBookmarksStore } from '@/store/bookmarks.store';
 
 export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
@@ -29,7 +33,15 @@ function SpaceIndex() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [chatOpen, setChatOpen] = useState(false);
-  const { activeSession } = useSessionStore();
+  const bookmarksPanelOpen = useBookmarksStore((s) => s.panelOpen);
+  const closeBookmarksPanel = useBookmarksStore((s) => s.closePanel);
+  const { activeSession, currentAreaZone } = useSessionStore();
+  const inLibrary = currentAreaZone?.roomId === ZONE_CONFIG.zone_library.roomId;
+
+  // Close bookmarks panel when player leaves the library area
+  useEffect(() => {
+    if (!inLibrary) closeBookmarksPanel();
+  }, [inLibrary, closeBookmarksPanel]);
 
   const campusHeight = 7;
 
@@ -43,8 +55,8 @@ function SpaceIndex() {
   }, [activeSession, navigate]);
 
   useEffect(() => {
-    if (chatOpen) document.exitPointerLock();
-  }, [chatOpen]);
+    if (chatOpen || bookmarksPanelOpen) document.exitPointerLock();
+  }, [chatOpen, bookmarksPanelOpen]);
 
   useSpaceEntry();
 
@@ -70,8 +82,16 @@ function SpaceIndex() {
       )}
 
       <ZonePanel />
-      <ChatToggle open={chatOpen} onToggle={() => setChatOpen((o) => !o)} />
+      <ChatToggle
+        open={chatOpen}
+        onToggle={() => {
+          setChatOpen((o) => !o);
+          closeBookmarksPanel();
+        }}
+      />
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
+      {inLibrary && <BookmarksToggle className='right-20' />}
+      {inLibrary && bookmarksPanelOpen && <BookmarksPanel />}
 
       {/* Voice bar for the common area. VoiceBar returns null internally when
           there is no active session. For MEETING/STUDY sessions the navigation
@@ -160,7 +180,7 @@ function SpaceIndex() {
           <Common position={[-10, 0, 7.5]} width={20} depth={15} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 
-          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen} />
+          <Player position={DEFAULT_SPAWN} lockEnabled={!chatOpen && !bookmarksPanelOpen} />
           <RemotePlayers />
         </Physics>
       </SafeCanvas>

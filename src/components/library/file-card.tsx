@@ -1,31 +1,21 @@
 import { useState } from 'react';
-import { FileText, FileIcon, Download, Eye, Trash2, Tag, User, BookOpen } from 'lucide-react';
+import {
+  FileText,
+  FileIcon,
+  Download,
+  Eye,
+  Trash2,
+  Tag,
+  User,
+  BookOpen,
+  Bookmark,
+} from 'lucide-react';
 import { useLibraryStore } from '@/store/library.store';
 import { useDeleteLibraryFile, useDownloadUrl } from '@/hooks/useLibrary';
 import { useAuthStore } from '@/store/auth.store';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { CATEGORY_LABELS, CATEGORY_COLORS } from './category-config';
 import type { FileEntity } from '@/types/file';
-
-const CATEGORY_LABELS: Record<string, string> = {
-  LECTURE_NOTES: 'Lecture',
-  PAST_EXAMS: 'Past Exam',
-  ASSIGNMENTS: 'Assignment',
-  SOLUTIONS: 'Solution',
-  CHEAT_SHEETS: 'Cheat Sheet',
-  TUTORIAL: 'Tutorial',
-  RESOURCE: 'Resource',
-  MISC: 'Misc',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  LECTURE_NOTES: 'bg-blue-500/20 text-blue-300',
-  PAST_EXAMS: 'bg-red-500/20 text-red-300',
-  ASSIGNMENTS: 'bg-orange-500/20 text-orange-300',
-  SOLUTIONS: 'bg-green-500/20 text-green-300',
-  CHEAT_SHEETS: 'bg-purple-500/20 text-purple-300',
-  TUTORIAL: 'bg-teal-500/20 text-teal-300',
-  RESOURCE: 'bg-indigo-500/20 text-indigo-300',
-  MISC: 'bg-gray-500/20 text-gray-300',
-};
 
 interface Props {
   file: FileEntity;
@@ -53,7 +43,10 @@ export function FileCard({ file, roomId }: Props) {
   const currentUserId = useAuthStore((s) => s.user?.id);
   const deleteMutation = useDeleteLibraryFile(roomId);
   const downloadMutation = useDownloadUrl();
+  const { isBookmarked, toggle: toggleBookmark } = useBookmarks();
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const bookmarked = isBookmarked(file.id);
 
   const isPdf = file.mimeType === 'application/pdf';
   const isOwner = String(currentUserId) === file.uploadedById;
@@ -160,6 +153,18 @@ export function FileCard({ file, roomId }: Props) {
               </button>
             </div>
           )}
+          <button
+            onClick={() => toggleBookmark(file)}
+            className={`rounded-lg p-1.5 transition-colors
+              ${
+                bookmarked
+                  ? 'text-yellow-400 hover:bg-yellow-500/20'
+                  : 'text-white/30 hover:bg-white/10 hover:text-white/70'
+              }`}
+            title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+          >
+            <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? 'fill-yellow-400' : ''}`} />
+          </button>
           <button
             onClick={() => downloadMutation.mutate(file.id)}
             disabled={downloadMutation.isPending}
