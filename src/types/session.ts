@@ -43,4 +43,14 @@ export interface CreateSessionDto {
   description?: string;
   password?: string;
   scheduledStartTime?: string;
+  invitedFriendsIds?: string[];
+}
+
+export interface SessionInvite {
+  sessionId: string;
+  roomId: string;
+  hostId: string;
+  sessionTitle: string;
+  sessionType: string;
+  inviteToken: string;
 }

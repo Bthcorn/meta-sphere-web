@@ -83,8 +83,8 @@ export function useSession() {
 
   // ── Core join ────────────────────────────────────────────────────────────
   const _join = useCallback(
-    async (sessionId: string, password?: string) => {
-      await sessionsApi.join(sessionId, password);
+    async (sessionId: string, password?: string, inviteToken?: string) => {
+      await sessionsApi.join(sessionId, password, inviteToken);
 
       // Fetch session + participants in parallel.
       // Pre-populate the participants cache BEFORE setActiveSession so that
@@ -134,8 +134,15 @@ export function useSession() {
   });
 
   const joinSession = useMutation({
-    mutationFn: ({ sessionId, password }: { sessionId: string; password?: string }) =>
-      _join(sessionId, password),
+    mutationFn: ({
+      sessionId,
+      password,
+      inviteToken,
+    }: {
+      sessionId: string;
+      password?: string;
+      inviteToken?: string;
+    }) => _join(sessionId, password, inviteToken),
   });
 
   const leaveSession = useMutation({

@@ -24,6 +24,11 @@ import { VoiceBar } from '@/components/space/voice/voice-bar';
 import { BookmarksToggle } from '@/components/library/bookmarks-toggle';
 import { BookmarksPanel } from '@/components/library/bookmarks-panel';
 import { useBookmarksStore } from '@/store/bookmarks.store';
+import { useSessionInvites } from '@/hooks/useSessionInvites';
+import { FriendsToggle } from '@/components/friend/friends-toggle';
+import { FriendsPanel } from '@/components/friend/friends-panel';
+import { SessionInviteToast } from '@/components/session/session-invite-toast';
+import { FriendRequestToast } from '@/components/friend/friend-request-toast';
 
 export const Route = createFileRoute('/_authenticated/space/')({
   component: SpaceIndex,
@@ -33,6 +38,7 @@ function SpaceIndex() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [chatOpen, setChatOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   const bookmarksPanelOpen = useBookmarksStore((s) => s.panelOpen);
   const closeBookmarksPanel = useBookmarksStore((s) => s.closePanel);
   const { activeSession, currentAreaZone } = useSessionStore();
@@ -54,10 +60,12 @@ function SpaceIndex() {
   }, [activeSession, navigate]);
 
   useEffect(() => {
-    if (chatOpen || bookmarksPanelOpen) document.exitPointerLock();
-  }, [chatOpen, bookmarksPanelOpen]);
+    if (chatOpen || bookmarksPanelOpen || friendsOpen) document.exitPointerLock();
+  }, [chatOpen, bookmarksPanelOpen, friendsOpen]);
 
   useSpaceEntry();
+
+  useSessionInvites();
 
   return (
     <div className='w-screen h-screen bg-black'>
@@ -88,9 +96,20 @@ function SpaceIndex() {
           closeBookmarksPanel();
         }}
       />
+      <FriendsToggle
+        open={friendsOpen}
+        onToggle={() => {
+          setFriendsOpen((o) => !o);
+          setChatOpen(false);
+        }}
+      />
       {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
       {inLibrary && <BookmarksToggle className='right-20' />}
       {inLibrary && bookmarksPanelOpen && <BookmarksPanel />}
+      {friendsOpen && <FriendsPanel onClose={() => setFriendsOpen(false)} />}
+
+      <SessionInviteToast />
+      <FriendRequestToast />
 
       <VoiceBar />
 

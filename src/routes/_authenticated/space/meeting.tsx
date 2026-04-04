@@ -15,6 +15,7 @@ import { WhiteboardPanel } from '@/components/whiteboard/whiteboard-panel';
 import { WhiteboardToggle } from '@/components/whiteboard/whiteboard-toggle';
 import { useWhiteboardPresence } from '@/hooks/useWhiteboardPresence';
 import { FileTray } from '@/components/session/file-tray';
+import { useSessionInvites } from '@/hooks/useSessionInvites';
 
 export const Route = createFileRoute('/_authenticated/space/meeting')({
   component: MeetingPage,
@@ -46,6 +47,8 @@ function MeetingPage() {
   useSpaceEntry();
   // Subscribe to whiteboard room so drawing indicators work even when panel is closed
   useWhiteboardPresence(activeSession?.id ?? '');
+
+  useSessionInvites();
 
   // Go back to campus when the session ends, user leaves, or if a SOCIAL
   // session somehow lands here (SOCIAL sessions stay in /space).
