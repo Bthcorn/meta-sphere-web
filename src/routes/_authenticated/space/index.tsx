@@ -21,6 +21,7 @@ import { ZONE_CONFIG } from '@/config/zone-sessions';
 import { ChatToggle } from '@/components/space/chat/chat-toggle';
 import { ChatPanel } from '@/components/space/chat/chat-panel';
 import { VoiceBar } from '@/components/space/voice/voice-bar';
+import { useVoice } from '@/hooks/useVoice';
 import { BookmarksToggle } from '@/components/library/bookmarks-toggle';
 import { BookmarksPanel } from '@/components/library/bookmarks-panel';
 import { useBookmarksStore } from '@/store/bookmarks.store';
@@ -32,6 +33,7 @@ export const Route = createFileRoute('/_authenticated/space/')({
 function SpaceIndex() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { muted, toggleMute, peers, connected, error: voiceError } = useVoice();
   const [chatOpen, setChatOpen] = useState(false);
   const bookmarksPanelOpen = useBookmarksStore((s) => s.panelOpen);
   const closeBookmarksPanel = useBookmarksStore((s) => s.closePanel);
@@ -92,7 +94,13 @@ function SpaceIndex() {
       {inLibrary && <BookmarksToggle className='right-20' />}
       {inLibrary && bookmarksPanelOpen && <BookmarksPanel />}
 
-      <VoiceBar />
+      <VoiceBar
+        muted={muted}
+        toggleMute={toggleMute}
+        peers={peers}
+        connected={connected}
+        error={voiceError}
+      />
 
       <Crosshair />
       <SafeCanvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
@@ -207,7 +215,6 @@ function SpaceIndex() {
             </group>
           </RigidBody>
 
-          {/* --- ROOM COMPONENTS --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
           <Common position={[-10, 0, 7.5]} width={20} depth={15} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />

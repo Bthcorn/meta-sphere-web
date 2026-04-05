@@ -15,6 +15,11 @@ import { WhiteboardPanel } from '@/components/whiteboard/whiteboard-panel';
 import { WhiteboardToggle } from '@/components/whiteboard/whiteboard-toggle';
 import { useWhiteboardPresence } from '@/hooks/useWhiteboardPresence';
 import { FileTray } from '@/components/session/file-tray';
+import { useVoice } from '@/hooks/useVoice';
+import { useScreenShare } from '@/hooks/useScreenShare';
+import { ScreenShareOverlay } from '@/components/space/screenshare/screen-share-overlay';
+import { useScreenShareStore } from '@/store/screen-share.store';
+import { useAuthStore } from '@/store/auth.store';
 
 export const Route = createFileRoute('/_authenticated/space/meeting')({
   component: MeetingPage,
@@ -26,6 +31,12 @@ function MeetingPage() {
   const trayOpen = useSessionFilesStore((s) => s.trayOpen);
   const [chatOpen, setChatOpen] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
+
+  const { roomRef, muted, toggleMute, peers, connected, error: voiceError } = useVoice();
+  const username = useAuthStore((s) => s.user?.username ?? 'You');
+  const { sharing, toggleShare } = useScreenShare(roomRef);
+  const screenStream = useScreenShareStore((s) => s.stream);
+  const screenMinimized = useScreenShareStore((s) => s.isMinimized);
 
   // On mount: clear stale zone/tray state that persists across navigation.
   // currentZoneConfig being non-null prevents SafePointerLockControls from
@@ -59,6 +70,13 @@ function MeetingPage() {
   useEffect(() => {
     if (chatOpen || whiteboardOpen || trayOpen) document.exitPointerLock();
   }, [chatOpen, whiteboardOpen, trayOpen]);
+
+  // Exit pointer lock when the screen share overlay opens
+  useEffect(() => {
+    if (screenStream && !screenMinimized) {
+      document.exitPointerLock();
+    }
+  }, [screenStream, screenMinimized]);
 
   // Guard: if pointer lock is somehow re-acquired while a panel is open, release it immediately
   useEffect(() => {
@@ -97,8 +115,19 @@ function MeetingPage() {
       />
       {whiteboardOpen && <WhiteboardPanel onClose={() => setWhiteboardOpen(false)} />}
 
+      {/* Screen share overlay */}
+      <ScreenShareOverlay onStop={() => toggleShare(username)} />
+
       {/* Voice controls at the bottom */}
-      <VoiceBar />
+      <VoiceBar
+        muted={muted}
+        toggleMute={toggleMute}
+        peers={peers}
+        connected={connected}
+        error={voiceError}
+        onToggleShare={() => toggleShare(username)}
+        sharing={sharing}
+      />
 
       {/* File tray — bottom right, left of whiteboard/chat toggles */}
       <FileTray sessionId={activeSession.id} />
@@ -108,7 +137,11 @@ function MeetingPage() {
       {import.meta.env.DEV && <PresenceDebug />}
 
       {/* 3-D meeting room — fills the whole viewport */}
-      <MeetingRoomScene lockEnabled={!whiteboardOpen && !chatOpen && !trayOpen} />
+      <MeetingRoomScene
+        lockEnabled={
+          !whiteboardOpen && !chatOpen && !trayOpen && !(screenStream && !screenMinimized)
+        }
+      />
     </div>
   );
 }
