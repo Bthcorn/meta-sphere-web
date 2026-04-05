@@ -29,13 +29,7 @@ function IdleSurface() {
   return (
     <mesh position={[0, 0, 0.01]}>
       <boxGeometry args={[5.8, 3.3, 0.05]} />
-      <meshStandardMaterial
-        color='#000000'
-        roughness={0.2}
-        metalness={0.8}
-        emissive='#0284c7'
-        emissiveIntensity={0.2}
-      />
+      <meshStandardMaterial color='#000000' roughness={0.5} metalness={0.5} />
     </mesh>
   );
 }
