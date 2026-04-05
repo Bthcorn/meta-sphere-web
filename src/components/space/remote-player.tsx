@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { UserPlus, Check, Users } from 'lucide-react';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useVoiceStore } from '@/store/voice.store';
@@ -57,11 +55,10 @@ function RemotePlayer({
 }: RemotePlayerProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { sendRequest } = useFriendRequests();
-  // Store the userId the optimistic state belongs to; resets automatically when userId changes.
   const [optimisticSentId, setOptimisticSentId] = useState<string | null>(null);
   const sendLockRef = useRef(false);
 
-  const showSent = hasOutgoingFriendRequest || optimisticSentId === userId;
+  const friendRequestSent = hasOutgoingFriendRequest || optimisticSentId === userId;
 
   const tmpVec = useRef(new THREE.Vector3()).current;
   const tmpQuat = useRef(new THREE.Quaternion()).current;
@@ -106,6 +103,19 @@ function RemotePlayer({
         hatId={hatId}
         bobOffset={bobOffset}
         speaking={speaking}
+        isFriend={isFriend}
+        friendRequestSent={friendRequestSent}
+        onAddFriend={() => {
+          if (sendLockRef.current || sendRequest.isPending) return;
+          sendLockRef.current = true;
+          setOptimisticSentId(userId);
+          sendRequest.mutate(userId, {
+            onError: () => {
+              sendLockRef.current = false;
+              setOptimisticSentId(null);
+            },
+          });
+        }}
       />
     </group>
   );
@@ -133,6 +143,7 @@ export function RemotePlayers() {
   return (
     <>
       {remoteUsers.map(({ userId, username, position, avatar }) => {
+        const idStr = String(userId);
         const skinColor = avatar.skinColor ?? colorFromUsername(username);
         const shirtColor = avatar.shirtColorId
           ? (SHIRT_COLOR_MAP[avatar.shirtColorId]?.color ?? shirtColorFromUsername(username))
@@ -140,6 +151,7 @@ export function RemotePlayers() {
         return (
           <RemotePlayer
             key={userId}
+            userId={idStr}
             username={username}
             position={displayPosition(position)}
             color={skinColor}
@@ -149,6 +161,8 @@ export function RemotePlayers() {
             bobOffset={bobOffsetFromUsername(username)}
             rotationY={position.rotationY}
             speaking={speakingUserIds.has(String(userId))}
+            isFriend={friendIds.has(idStr)}
+            hasOutgoingFriendRequest={outgoingRequestUserIds.has(idStr)}
           />
         );
       })}
