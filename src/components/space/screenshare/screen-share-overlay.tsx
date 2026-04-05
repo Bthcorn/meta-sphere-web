@@ -79,55 +79,53 @@ export function ScreenShareOverlay({ onStop }: Props) {
     );
   }
 
-  // ── EXPANDED: full overlay ─────────────────────────────────────────────
+  // ── EXPANDED: centered floating window ───────────────────────────────
   return (
-    <div className='pointer-events-auto fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm'>
-      <div className='flex items-center justify-between px-4 py-2.5 bg-black/70 border-b border-white/10 shrink-0'>
-        <div className='flex items-center gap-2'>
-          <div className='h-2 w-2 rounded-full bg-blue-400 animate-pulse' />
-          <span className='text-sm text-white/80'>
-            <span className='font-semibold text-white'>{sharerName}</span>
-            {isLocal ? ' · You are sharing' : ' is sharing their screen'}
-          </span>
-        </div>
+    <div className='pointer-events-auto fixed inset-0 z-50 flex items-center justify-center p-4'>
+      <div className='flex flex-col overflow-hidden rounded-xl border border-white/20 shadow-2xl bg-black w-full max-w-5xl'>
+        <div className='flex items-center justify-between px-3 py-2 bg-black/80 border-b border-white/10 shrink-0'>
+          <div className='flex items-center gap-2'>
+            <div className='h-2 w-2 rounded-full bg-blue-400 animate-pulse' />
+            <span className='text-xs text-white/80'>
+              <span className='font-semibold text-white'>{sharerName}</span>
+              {isLocal ? ' · You are sharing' : ' is sharing their screen'}
+            </span>
+          </div>
 
-        <div className='flex items-center gap-2'>
-          <button
-            onClick={() => setMinimized(true)}
-            className='flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs
-                       bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors'
-          >
-            <Minimize2 size={12} />
-            Minimize
-          </button>
-
-          {isLocal && (
+          <div className='flex items-center gap-1.5'>
             <button
-              onClick={() => {
-                onStop();
-                clearStream();
-              }}
-              className='flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs
-                         bg-red-500/20 text-red-400 border border-red-500/30
-                         hover:bg-red-500/30 transition-colors'
+              onClick={() => setMinimized(true)}
+              className='flex items-center gap-1 rounded-md px-2 py-1 text-xs
+                         bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors'
             >
-              <MonitorOff size={12} />
-              Stop sharing
+              <Minimize2 size={11} />
+              Minimize
             </button>
-          )}
+
+            {isLocal && (
+              <button
+                onClick={() => {
+                  onStop();
+                  clearStream();
+                }}
+                className='flex items-center gap-1 rounded-md px-2 py-1 text-xs
+                           bg-red-500/20 text-red-400 border border-red-500/30
+                           hover:bg-red-500/30 transition-colors'
+              >
+                <MonitorOff size={11} />
+                Stop
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted={isLocal}
-        className='flex-1 w-full object-contain'
-      />
-
-      <div className='py-2 text-center text-[11px] text-white/30 shrink-0 select-none'>
-        This screen is also visible on the 3D monitor in the meeting room
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal}
+          className='w-full aspect-video object-contain bg-black'
+        />
       </div>
     </div>
   );
