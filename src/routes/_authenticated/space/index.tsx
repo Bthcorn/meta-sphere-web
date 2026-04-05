@@ -94,7 +94,13 @@ function SpaceIndex() {
       {inLibrary && <BookmarksToggle className='right-20' />}
       {inLibrary && bookmarksPanelOpen && <BookmarksPanel />}
 
-      <VoiceBar />
+      <VoiceBar
+        muted={muted}
+        toggleMute={toggleMute}
+        peers={peers}
+        connected={connected}
+        error={voiceError}
+      />
 
       <Crosshair />
       <SafeCanvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
