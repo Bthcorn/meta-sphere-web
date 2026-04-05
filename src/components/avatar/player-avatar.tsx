@@ -107,7 +107,7 @@ export function PlayerAvatar({
 
       {/* ── Username label ────────────────────────────────────── */}
       {showLabel && (
-        <Html position={[0, 1.08, 0]} center distanceFactor={7} occlude>
+        <Html position={[0, 1.35, 0]} center distanceFactor={7} occlude>
           <div
             style={{
               display: 'flex',
