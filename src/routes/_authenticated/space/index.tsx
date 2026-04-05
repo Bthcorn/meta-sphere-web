@@ -38,16 +38,15 @@ function SpaceIndex() {
   const { activeSession, currentAreaZone } = useSessionStore();
   const inLibrary = currentAreaZone?.roomId === ZONE_CONFIG.zone_library.roomId;
 
-  // Close bookmarks panel when player leaves the library area
   useEffect(() => {
     if (!inLibrary) closeBookmarksPanel();
   }, [inLibrary, closeBookmarksPanel]);
 
   const campusHeight = 7;
 
-  // Navigate to the dedicated meeting page for formal sessions (MEETING, STUDY,
-  // WORKSHOP). SOCIAL sessions (chilling / spawn common area) stay in the space
-  // so the player can move around while talking.
+  const colorCommon = '#4b5563'; // Dark Gray
+  const colorMeeting = '#EDEADE'; // Alabaster
+
   useEffect(() => {
     if (activeSession && activeSession.type !== 'SOCIAL') {
       navigate({ to: '/space/meeting' });
@@ -93,60 +92,95 @@ function SpaceIndex() {
       {inLibrary && <BookmarksToggle className='right-20' />}
       {inLibrary && bookmarksPanelOpen && <BookmarksPanel />}
 
-      {/* Voice bar for the common area. VoiceBar returns null internally when
-          there is no active session. For MEETING/STUDY sessions the navigation
-          effect unmounts this component (and cancels the connect) before the
-          async voice-token request completes, so there is no double-connect. */}
       <VoiceBar />
 
       <Crosshair />
-      <SafeCanvas dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
+      <SafeCanvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: 'default' }}>
         <ambientLight intensity={0.5} />
-        <directionalLight position={[20, 30, 20]} intensity={1} />
+        <directionalLight position={[20, 30, 20]} intensity={1} castShadow />
         <Sky sunPosition={[100, 20, 100]} />
 
         <Physics>
           <RigidBody type='fixed'>
-            {/* Ceiling sections */}
-            <mesh position={[-10, campusHeight, 0]}>
-              <boxGeometry args={[21, 0.1, 32]} />
+            {/* --- Ceiling sections --- */}
+
+            {/* Meeting Area Roof (Alabaster) */}
+            <mesh position={[-10, campusHeight, -8]}>
+              <boxGeometry args={[21, 0.1, 16]} />
+              <meshStandardMaterial color={colorMeeting} />
+            </mesh>
+
+            {/* Common Area Roof (Dark) */}
+            <mesh position={[-10, campusHeight, 8]}>
+              <boxGeometry args={[21, 0.1, 16]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
+
+            {/* Library Area Roof */}
             <mesh position={[10.5, campusHeight, 7.5]}>
               <boxGeometry args={[20, 0.1, 16]} />
               <meshStandardMaterial color='#1f2937' />
             </mesh>
 
-            {/* Outer Walls */}
-            <mesh position={[-20.5, campusHeight / 2, 0]}>
-              <boxGeometry args={[1, campusHeight, 32]} />
-              <meshStandardMaterial color='#4b5563' />
-            </mesh>
+            {/* --- OUTER WALLS --- */}
+
+            {/* LEFT WALL: Common Area (Gray) + Meeting Area ends (Alabaster) */}
+            <group>
+              <mesh position={[-20.5, campusHeight / 2, 8]}>
+                <boxGeometry args={[1, campusHeight, 16]} />
+                <meshStandardMaterial color={colorCommon} />
+              </mesh>
+              <mesh position={[-20.5, campusHeight / 2, -14.25]}>
+                <boxGeometry args={[1, campusHeight, 2.5]} />
+                <meshStandardMaterial color={colorMeeting} />
+              </mesh>
+              <mesh position={[-20.5, campusHeight / 2, -0.75]}>
+                <boxGeometry args={[1, campusHeight, 2.5]} />
+                <meshStandardMaterial color={colorCommon} />
+              </mesh>
+            </group>
+
+            {/* BACK WALL (Meeting Room portion -> Alabaster) */}
             <mesh position={[-10, campusHeight / 2, -15.5]}>
               <boxGeometry args={[20, campusHeight, 1]} />
-              <meshStandardMaterial color='#4b5563' />
+              <meshStandardMaterial color={colorMeeting} />
             </mesh>
-            <mesh position={[0.5, campusHeight / 2, -8]}>
-              <boxGeometry args={[1, campusHeight, 16]} />
-              <meshStandardMaterial color='#4b5563' />
+
+            {/* DIVIDING WALL (Meeting <-> Common) */}
+            <mesh position={[0.5, campusHeight / 2, -1.25]}>
+              <boxGeometry args={[1, campusHeight, 2.5]} />
+              <meshStandardMaterial color={colorCommon} />
             </mesh>
+
+            <mesh position={[0.5, campusHeight / 2, -7.5]}>
+              <boxGeometry args={[1, campusHeight, 4.0]} />
+              <meshStandardMaterial color={colorMeeting} />
+            </mesh>
+
+            <mesh position={[0.5, campusHeight / 2, -13.75]}>
+              <boxGeometry args={[1, campusHeight, 2.5]} />
+              <meshStandardMaterial color={colorMeeting} />
+            </mesh>
+
+            {/* BACK WALL (Library portion -> Gray) */}
             <mesh position={[10.5, campusHeight / 2, -0.5]}>
               <boxGeometry args={[20, campusHeight, 1]} />
-              <meshStandardMaterial color='#4b5563' />
+              <meshStandardMaterial color={colorCommon} />
             </mesh>
+
+            {/* RIGHT WALL (Library -> Gray) */}
             <mesh position={[20.5, campusHeight / 2, 7.5]}>
               <boxGeometry args={[1, campusHeight, 16]} />
-              <meshStandardMaterial color='#4b5563' />
+              <meshStandardMaterial color={colorCommon} />
             </mesh>
+
+            {/* FRONT WALL (Gray) */}
             <mesh position={[0, campusHeight / 2, 15.5]}>
               <boxGeometry args={[42, campusHeight, 1]} />
-              <meshStandardMaterial color='#4b5563' />
+              <meshStandardMaterial color={colorCommon} />
             </mesh>
 
             {/* --- INTERNAL PARTITIONS --- */}
-
-            {/* 1. THE HOLEY WALL (Extended Spawn <-> Library) */}
-            {/* Spacing logic: Starts exactly 0.65 units after the Spawn wall ends */}
             {Array.from({ length: 11 }).map((_, i) => (
               <mesh
                 key={`chilling-slat-${i}`}
@@ -157,7 +191,6 @@ function SpaceIndex() {
               </mesh>
             ))}
 
-            {/* 2. Wall with Doorway (Spawn <-> Library) */}
             <group position={[0, campusHeight / 2, 3.75]}>
               <mesh position={[0, 0, -2.875]}>
                 <boxGeometry args={[0.4, campusHeight, 1.75]} />
@@ -176,7 +209,6 @@ function SpaceIndex() {
 
           {/* --- ROOM COMPONENTS --- */}
           <Meeting position={[-10, 0, -7.5]} width={20} depth={15} />
-          {/* Spawn point extended to cover old Chilling area (depth 7.5 + 7.5 = 15, center Z adjusted to 7.5) */}
           <Common position={[-10, 0, 7.5]} width={20} depth={15} />
           <Library position={[10, 0, 7.5]} width={20} depth={15} />
 

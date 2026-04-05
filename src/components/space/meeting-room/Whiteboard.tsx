@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
+import { useMemo } from 'react';
 import type { GLTF } from 'three-stdlib';
 import type { ThreeElements } from '@react-three/fiber';
 
@@ -32,14 +33,21 @@ type GLTFResult = GLTF & {
 export function Model(props: ThreeElements['group']) {
   const { nodes, materials } = useGLTF('/whiteboard.glb') as unknown as GLTFResult;
 
+  // 1. We create a custom pure white material here.
+  // I added a low roughness (0.2) so it looks a little glossy like a real dry-erase board!
+  const pureWhiteBoardMaterial = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.2 }),
+    []
+  );
+
   return (
     <group {...props} dispose={null}>
-      {/* Added RigidBody with trimesh colliders. 
-          This makes the board a physical solid object in the room.
-      */}
       <RigidBody type='fixed' colliders='trimesh'>
         <group rotation={[-Math.PI / 2, 0, 0]} scale={[60, 80, 0.1]}>
-          <mesh geometry={nodes.Cube_1.geometry} material={materials.Material} />
+          {/* 2. Guess & Check: Replace the `material={...}` with `material={pureWhiteBoardMaterial}` 
+                 one by one until the board turns white. I've done it to Cube_1 as an example! */}
+          <mesh geometry={nodes.Cube_1.geometry} material={pureWhiteBoardMaterial} />{' '}
+          {/* <--- TRY IT HERE FIRST */}
           <mesh geometry={nodes.Cube_2.geometry} material={materials['Material.008']} />
           <mesh geometry={nodes.Cube_3.geometry} material={materials['Material.006']} />
           <mesh geometry={nodes.Cube_4.geometry} material={materials['Material.005']} />
