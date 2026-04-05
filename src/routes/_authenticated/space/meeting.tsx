@@ -35,6 +35,12 @@ function MeetingPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
 
+  const { roomRef, muted, toggleMute, peers, connected, error: voiceError } = useVoice();
+  const username = useAuthStore((s) => s.user?.username ?? 'You');
+  const { sharing, toggleShare } = useScreenShare(roomRef);
+  const screenStream = useScreenShareStore((s) => s.stream);
+  const screenMinimized = useScreenShareStore((s) => s.isMinimized);
+
   // Clear stale zone/tray on mount; restore area on unmount.
   useEffect(() => {
     useSessionStore.getState().exitZone();
