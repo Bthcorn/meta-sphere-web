@@ -25,6 +25,7 @@ import { BookmarksToggle } from '@/components/library/bookmarks-toggle';
 import { BookmarksPanel } from '@/components/library/bookmarks-panel';
 import { useBookmarksStore } from '@/store/bookmarks.store';
 import { useSessionInvites } from '@/hooks/useSessionInvites';
+import { useFriendRequestsRealtimeSync } from '@/hooks/useFriendRequestsRealtimeSync';
 import { FriendsToggle } from '@/components/friend/friends-toggle';
 import { FriendsPanel } from '@/components/friend/friends-panel';
 import { SessionInviteToast } from '@/components/session/session-invite-toast';
@@ -53,6 +54,7 @@ function SpaceIndex() {
   const colorCommon = '#4b5563'; // Dark Gray
   const colorMeeting = '#EDEADE'; // Alabaster
 
+  // Non-SOCIAL sessions redirect to the meeting page.
   useEffect(() => {
     if (activeSession && activeSession.type !== 'SOCIAL') {
       navigate({ to: '/space/meeting' });
@@ -66,6 +68,7 @@ function SpaceIndex() {
   useSpaceEntry();
 
   useSessionInvites();
+  useFriendRequestsRealtimeSync();
 
   return (
     <div className='w-screen h-screen bg-black'>

@@ -16,6 +16,8 @@ import { WhiteboardToggle } from '@/components/whiteboard/whiteboard-toggle';
 import { useWhiteboardPresence } from '@/hooks/useWhiteboardPresence';
 import { FileTray } from '@/components/session/file-tray';
 import { useSessionInvites } from '@/hooks/useSessionInvites';
+import { useFriendRequestsRealtimeSync } from '@/hooks/useFriendRequestsRealtimeSync';
+import { FriendRequestToast } from '@/components/friend/friend-request-toast';
 
 export const Route = createFileRoute('/_authenticated/space/meeting')({
   component: MeetingPage,
@@ -28,11 +30,7 @@ function MeetingPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
 
-  // On mount: clear stale zone/tray state that persists across navigation.
-  // currentZoneConfig being non-null prevents SafePointerLockControls from
-  // mounting inside Player, making pointer lock permanently unavailable.
-  // On unmount: clear area so VoiceBar falls back to "Common Area" after leaving
-  // (the physics scene unmounts without firing onIntersectionExit).
+  // Clear stale zone/tray on mount; restore area on unmount.
   useEffect(() => {
     useSessionStore.getState().exitZone();
     useSessionFilesStore.getState().closeTray();
@@ -41,17 +39,14 @@ function MeetingPage() {
     };
   }, []);
 
-  // Keep participants fresh
   useSession();
-  // Re-attach socket presence listeners (same as the main space page)
   useSpaceEntry();
-  // Subscribe to whiteboard room so drawing indicators work even when panel is closed
   useWhiteboardPresence(activeSession?.id ?? '');
 
   useSessionInvites();
+  useFriendRequestsRealtimeSync();
 
-  // Go back to campus when the session ends, user leaves, or if a SOCIAL
-  // session somehow lands here (SOCIAL sessions stay in /space).
+  // Redirect to /space when session ends or a SOCIAL session lands here.
   useEffect(() => {
     if (!activeSession || activeSession.type === 'SOCIAL') {
       navigate({ to: '/space' });
@@ -105,6 +100,8 @@ function MeetingPage() {
 
       {/* File tray — bottom right, left of whiteboard/chat toggles */}
       <FileTray sessionId={activeSession.id} />
+
+      <FriendRequestToast />
 
       <Crosshair />
 

@@ -15,14 +15,7 @@ function RequesterAvatar({ username }: { username: string }) {
   );
 }
 
-/**
- * Floating toast cards for incoming friend requests.
- * Mount once at the space / meeting layout level alongside SessionInviteToast.
- *
- * Requests are polled from GET /api/friends/requests every 30 s.
- * Once accepted or declined the card disappears immediately (optimistic via
- * TanStack Query invalidation).
- */
+/** Floating toast cards for incoming friend requests. Mount at space/meeting level. */
 export function FriendRequestToast() {
   const { pendingRequests, accept, decline } = useFriendRequests();
 
