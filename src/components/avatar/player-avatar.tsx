@@ -3,13 +3,21 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { colorFromUsername, shirtColorFromUsername } from '@/lib/avatar-utils';
+import { GLASSES_MAP, HAT_MAP } from '@/store/avatar.store';
+import { GlassesAccessory, HatAccessory } from './accessories';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 export type PlayerAvatarProps = {
   /** Display name shown above the avatar's head. */
   username: string;
-  /** Override the auto-derived color. */
+  /** Override the auto-derived skin color. */
   color?: string;
+  /** Override the auto-derived shirt color. */
+  shirtColor?: string;
+  /** Which glasses to render. Default: 'none'. */
+  glassesId?: string;
+  /** Which hat to render. Default: 'none'. */
+  hatId?: string;
   /** Whether to render the floating username label. Default: true. */
   showLabel?: boolean;
   /** Static offset added to the group's Y position before bobbing. Default: 0. */
@@ -26,6 +34,9 @@ export type PlayerAvatarProps = {
 export function PlayerAvatar({
   username,
   color,
+  shirtColor: shirtColorProp,
+  glassesId = 'none',
+  hatId = 'none',
   showLabel = true,
   baseY = 0,
   bobOffset = 0,
@@ -33,7 +44,10 @@ export function PlayerAvatar({
   speaking = false,
 }: PlayerAvatarProps) {
   const skinColor = color ?? colorFromUsername(username);
-  const shirtColor = shirtColorFromUsername(username);
+  const shirtColor = shirtColorProp ?? shirtColorFromUsername(username);
+
+  const glassesColor = GLASSES_MAP[glassesId]?.color ?? 'transparent';
+  const hatColor = HAT_MAP[hatId]?.color ?? 'transparent';
 
   const groupRef = useRef<THREE.Group>(null);
 
@@ -64,7 +78,6 @@ export function PlayerAvatar({
       {/* ── Head ─────────────────────────────────────────────── */}
       <mesh position={[0, 0.65, 0]} castShadow>
         <sphereGeometry args={[0.2, 24, 24]} />
-        {/* roughness ~0.75, zero metalness = matte organic skin */}
         <meshStandardMaterial color={skinColor} roughness={0.75} metalness={0} />
       </mesh>
 
@@ -87,6 +100,10 @@ export function PlayerAvatar({
         <sphereGeometry args={[0.02, 8, 8]} />
         <meshStandardMaterial color='#1a1a1a' roughness={0.1} metalness={0} />
       </mesh>
+
+      {/* ── Accessories ──────────────────────────────────────── */}
+      {glassesId !== 'none' && <GlassesAccessory id={glassesId} color={glassesColor} />}
+      {hatId !== 'none' && <HatAccessory id={hatId} color={hatColor} />}
 
       {/* ── Username label ────────────────────────────────────── */}
       {showLabel && (

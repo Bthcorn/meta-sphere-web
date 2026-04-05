@@ -8,13 +8,13 @@ export interface AvatarOption {
   description: string;
 }
 
-export const AVATAR_OPTIONS: AvatarOption[] = [
-  { id: 'violet', name: 'Violet', color: '#7c5dfa', description: 'Bold and creative' },
-  { id: 'cyan', name: 'Cyan', color: '#22d3ee', description: 'Clear and focused' },
-  { id: 'emerald', name: 'Emerald', color: '#34d399', description: 'Calm and reliable' },
-  { id: 'rose', name: 'Rose', color: '#fb7185', description: 'Energetic and warm' },
-  { id: 'amber', name: 'Amber', color: '#fbbf24', description: 'Optimistic and bright' },
-  { id: 'indigo', name: 'Indigo', color: '#818cf8', description: 'Thoughtful and deep' },
+export const SKIN_OPTIONS: AvatarOption[] = [
+  { id: 'fair', name: 'Fair', color: '#f5cba7', description: 'Peach tone' },
+  { id: 'light', name: 'Light', color: '#e8a87c', description: 'Light beige' },
+  { id: 'tan', name: 'Tan', color: '#d4895a', description: 'Medium tan' },
+  { id: 'brown', name: 'Brown', color: '#b8694a', description: 'Warm brown' },
+  { id: 'deep', name: 'Deep', color: '#8d4a30', description: 'Deep brown' },
+  { id: 'vdeep', name: 'Very deep', color: '#5c2e1a', description: 'Deepest tone' },
 ];
 
 export interface AccessoryOption {
@@ -37,13 +37,42 @@ export const HAT_OPTIONS: AccessoryOption[] = [
   { id: 'tophat', name: 'Top Hat', color: '#1f2937' },
 ];
 
+export interface ShirtOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export const SHIRT_COLOR_OPTIONS: ShirtOption[] = [
+  { id: 'slate', name: 'Slate', color: '#6b7280' },
+  { id: 'denim', name: 'Denim', color: '#4b6bab' },
+  { id: 'forest', name: 'Forest', color: '#4a7c59' },
+  { id: 'earth', name: 'Earth', color: '#7c5c3e' },
+  { id: 'purple', name: 'Purple', color: '#6d5a8a' },
+  { id: 'teal', name: 'Teal', color: '#3d6b6e' },
+];
+
+// ── O(1) lookup maps ───────────────────────────────────────────────────────
+// Prefer these over .find() on the arrays above.
+
+function toMap<T extends { id: string }>(arr: T[]): Readonly<Record<string, T>> {
+  return Object.fromEntries(arr.map((o) => [o.id, o]));
+}
+
+export const SKIN_MAP: Readonly<Record<string, AvatarOption>> = toMap(SKIN_OPTIONS);
+export const SHIRT_COLOR_MAP: Readonly<Record<string, ShirtOption>> = toMap(SHIRT_COLOR_OPTIONS);
+export const GLASSES_MAP: Readonly<Record<string, AccessoryOption>> = toMap(GLASSES_OPTIONS);
+export const HAT_MAP: Readonly<Record<string, AccessoryOption>> = toMap(HAT_OPTIONS);
+
 interface AvatarState {
   avatarId: string | null;
   glassesId: string;
   hatId: string;
+  shirtColorId: string;
   setAvatar: (id: string) => void;
   setGlasses: (id: string) => void;
   setHat: (id: string) => void;
+  setShirtColor: (id: string) => void;
   clearAvatar: () => void;
 }
 
@@ -53,10 +82,13 @@ export const useAvatarStore = create<AvatarState>()(
       avatarId: null,
       glassesId: 'none',
       hatId: 'none',
+      shirtColorId: 'slate',
       setAvatar: (id) => set({ avatarId: id }),
       setGlasses: (id) => set({ glassesId: id }),
       setHat: (id) => set({ hatId: id }),
-      clearAvatar: () => set({ avatarId: null, glassesId: 'none', hatId: 'none' }),
+      setShirtColor: (id) => set({ shirtColorId: id }),
+      clearAvatar: () =>
+        set({ avatarId: null, glassesId: 'none', hatId: 'none', shirtColorId: 'slate' }),
     }),
     { name: 'avatar' }
   )

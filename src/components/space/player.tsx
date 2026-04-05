@@ -12,7 +12,7 @@ import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { useSessionStore } from '@/store/session.store';
 import { useAuthStore } from '@/store/auth.store';
 import { PlayerAvatar } from '@/components/avatar/player-avatar';
-import { AVATAR_OPTIONS, useAvatarStore } from '@/store/avatar.store';
+import { SKIN_MAP, SHIRT_COLOR_MAP, useAvatarStore } from '@/store/avatar.store';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'w', 'W'] },
@@ -59,8 +59,11 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
   const [, getKeys] = useKeyboardControls();
   const username = useAuthStore((s) => s.user?.username ?? 'Player');
   const avatarColorId = useAvatarStore((s) => s.avatarId);
-  const skinTint =
-    avatarColorId != null ? AVATAR_OPTIONS.find((o) => o.id === avatarColorId)?.color : undefined;
+  const shirtColorId = useAvatarStore((s) => s.shirtColorId);
+  const glassesId = useAvatarStore((s) => s.glassesId);
+  const hatId = useAvatarStore((s) => s.hatId);
+  const skinTint = avatarColorId != null ? SKIN_MAP[avatarColorId]?.color : undefined;
+  const shirtColor = SHIRT_COLOR_MAP[shirtColorId]?.color;
   const currentZoneConfig = useSessionStore((s) => s.currentZoneConfig);
 
   // Release mouse when a zone panel opens and keep it free while the panel is visible.
@@ -137,9 +140,18 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
     );
 
     const t = rbRef.current.translation();
-    useSpacePresenceStore
-      .getState()
-      .updatePosition({ x: t.x, y: t.y, z: t.z, rotationY: rotationYRef.current });
+    useSpacePresenceStore.getState().updatePosition({
+      x: t.x,
+      y: t.y,
+      z: t.z,
+      rotationY: rotationYRef.current,
+      avatar: {
+        skinColor: skinTint,
+        shirtColorId,
+        glassesId,
+        hatId,
+      },
+    });
   });
 
   return (
@@ -166,7 +178,15 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
         position={[0, LOCAL_AVATAR_Y_OFFSET, 0]}
         scale={LOCAL_AVATAR_SCALE}
       >
-        <PlayerAvatar username={username} color={skinTint} showLabel={false} enableBob={false} />
+        <PlayerAvatar
+          username={username}
+          color={skinTint}
+          shirtColor={shirtColor}
+          glassesId={glassesId}
+          hatId={hatId}
+          showLabel={false}
+          enableBob={false}
+        />
       </group>
     </RigidBody>
   );

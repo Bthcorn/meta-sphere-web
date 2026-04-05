@@ -1,9 +1,18 @@
+export interface AvatarAppearance {
+  skinColor?: string;
+  shirtColorId?: string;
+  glassesId?: string;
+  hatId?: string;
+}
+
 export interface Position {
   x: number;
   y: number;
   z: number;
   /** Y-axis rotation (yaw) in radians — the direction the avatar is facing. */
   rotationY?: number;
+  /** Grouped avatar appearance — piggybacked from update_position payload. */
+  avatar?: AvatarAppearance;
 }
 
 /** Matches `RealtimeGateway` / `docs/REALTIME_SPEC.md`. */
@@ -35,5 +44,17 @@ export function parseUserStatePayload(raw: unknown): UserStatePayload | null {
     rotationYRaw !== undefined && rotationYRaw !== null && Number.isFinite(Number(rotationYRaw))
       ? Number(rotationYRaw)
       : undefined;
-  return { userId: String(id), username, roomId, position: { x, y, z, rotationY } };
+
+  let avatar: AvatarAppearance | undefined;
+  if (p.avatar && typeof p.avatar === 'object') {
+    const a = p.avatar as Record<string, unknown>;
+    avatar = {
+      skinColor: typeof a.skinColor === 'string' ? a.skinColor : undefined,
+      shirtColorId: typeof a.shirtColorId === 'string' ? a.shirtColorId : undefined,
+      glassesId: typeof a.glassesId === 'string' ? a.glassesId : undefined,
+      hatId: typeof a.hatId === 'string' ? a.hatId : undefined,
+    };
+  }
+
+  return { userId: String(id), username, roomId, position: { x, y, z, rotationY, avatar } };
 }
