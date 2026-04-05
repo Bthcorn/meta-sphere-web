@@ -2,14 +2,23 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { UserPlus, Check, Users } from 'lucide-react';
 import { colorFromUsername, shirtColorFromUsername } from '@/lib/avatar-utils';
+import { GLASSES_MAP, HAT_MAP } from '@/store/avatar.store';
+import { GlassesAccessory, HatAccessory } from './accessories';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 export type PlayerAvatarProps = {
   /** Display name shown above the avatar's head. */
   username: string;
-  /** Override the auto-derived color. */
+  /** Override the auto-derived skin color. */
   color?: string;
+  /** Override the auto-derived shirt color. */
+  shirtColor?: string;
+  /** Which glasses to render. Default: 'none'. */
+  glassesId?: string;
+  /** Which hat to render. Default: 'none'. */
+  hatId?: string;
   /** Whether to render the floating username label. Default: true. */
   showLabel?: boolean;
   /** Static offset added to the group's Y position before bobbing. Default: 0. */
@@ -20,20 +29,35 @@ export type PlayerAvatarProps = {
   enableBob?: boolean;
   /** When true, renders a speaking indicator on the name tag. Default: false. */
   speaking?: boolean;
+  /** Whether this player is already a friend of the viewer. */
+  isFriend?: boolean;
+  /** Whether the viewer has already sent a friend request to this player. */
+  friendRequestSent?: boolean;
+  /** Called when the viewer clicks "Add friend". Omit to hide the button. */
+  onAddFriend?: () => void;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
 export function PlayerAvatar({
   username,
   color,
+  shirtColor: shirtColorProp,
+  glassesId = 'none',
+  hatId = 'none',
   showLabel = true,
   baseY = 0,
   bobOffset = 0,
   enableBob = true,
   speaking = false,
+  isFriend = false,
+  friendRequestSent = false,
+  onAddFriend,
 }: PlayerAvatarProps) {
   const skinColor = color ?? colorFromUsername(username);
-  const shirtColor = shirtColorFromUsername(username);
+  const shirtColor = shirtColorProp ?? shirtColorFromUsername(username);
+
+  const glassesColor = GLASSES_MAP[glassesId]?.color ?? 'transparent';
+  const hatColor = HAT_MAP[hatId]?.color ?? 'transparent';
 
   const groupRef = useRef<THREE.Group>(null);
 
@@ -64,7 +88,6 @@ export function PlayerAvatar({
       {/* ── Head ─────────────────────────────────────────────── */}
       <mesh position={[0, 0.65, 0]} castShadow>
         <sphereGeometry args={[0.2, 24, 24]} />
-        {/* roughness ~0.75, zero metalness = matte organic skin */}
         <meshStandardMaterial color={skinColor} roughness={0.75} metalness={0} />
       </mesh>
 
@@ -88,61 +111,83 @@ export function PlayerAvatar({
         <meshStandardMaterial color='#1a1a1a' roughness={0.1} metalness={0} />
       </mesh>
 
+      {/* ── Accessories ──────────────────────────────────────── */}
+      {glassesId !== 'none' && <GlassesAccessory id={glassesId} color={glassesColor} />}
+      {hatId !== 'none' && <HatAccessory id={hatId} color={hatColor} />}
+
       {/* ── Username label ────────────────────────────────────── */}
       {showLabel && (
-        <Html position={[0, 1.08, 0]} center distanceFactor={7} occlude>
+        <Html position={[0, 1.35, 0]} center distanceFactor={7} occlude zIndexRange={[100, 0]}>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: speaking ? 'rgba(22, 101, 52, 0.85)' : 'rgba(10, 8, 24, 0.75)',
-              color: '#ffffff',
-              padding: '3px 10px',
-              borderRadius: '999px',
-              fontSize: '12px',
-              fontWeight: 600,
-              letterSpacing: '0.03em',
-              whiteSpace: 'nowrap',
-              backdropFilter: 'blur(6px)',
-              border: speaking
-                ? '1px solid rgba(74, 222, 128, 0.6)'
-                : '1px solid rgba(255,255,255,0.15)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              transition: 'background 0.15s, border-color 0.15s',
-            }}
+            className={`flex max-w-[min(92vw,18rem)] items-center gap-2 rounded-full border px-2.5 py-1
+                        text-xs font-semibold tracking-wide shadow-lg backdrop-blur-md
+                        ${
+                          speaking
+                            ? 'border-emerald-400/60 bg-emerald-950/85 text-white'
+                            : 'border-white/15 bg-[#0a0818]/75 text-white'
+                        }`}
+            style={{ pointerEvents: 'auto' }}
           >
             {speaking && (
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  gap: '2px',
-                  height: '10px',
-                }}
-              >
+              <span className='flex h-2.5 items-end gap-px'>
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
+                    className='block w-0.5 rounded-sm bg-emerald-400'
                     style={{
-                      display: 'block',
-                      width: '2px',
-                      borderRadius: '1px',
-                      background: '#4ade80',
-                      animation: `voiceBar 0.6s ease-in-out ${i * 0.12}s infinite alternate`,
+                      animation: `remoteVoiceBar 0.6s ease-in-out ${i * 0.12}s infinite alternate`,
                     }}
                   />
                 ))}
                 <style>{`
-                  @keyframes voiceBar {
+                  @keyframes remoteVoiceBar {
                     from { height: 3px; }
-                    to   { height: 10px; }
+                    to { height: 10px; }
                   }
                 `}</style>
               </span>
             )}
-            {username}
+
+            <span className='min-w-0 shrink truncate'>{username}</span>
+
+            {onAddFriend !== undefined && (
+              <>
+                <span className='h-3 w-px shrink-0 bg-white/20' aria-hidden />
+                {isFriend ? (
+                  <span className='flex shrink-0 items-center gap-1 text-emerald-400'>
+                    <Users className='h-3.5 w-3.5' />
+                    <span className='hidden sm:inline'>Friends</span>
+                  </span>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!friendRequestSent) onAddFriend();
+                    }}
+                    disabled={friendRequestSent}
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium transition
+                                ${
+                                  friendRequestSent
+                                    ? 'cursor-default bg-green-600/25 text-green-400'
+                                    : 'bg-violet-600/90 text-white hover:bg-violet-500 disabled:opacity-50'
+                                }`}
+                  >
+                    {friendRequestSent ? (
+                      <>
+                        <Check className='h-3 w-3' aria-hidden />
+                        <span className='hidden sm:inline'>Sent</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className='h-3 w-3' />
+                        <span className='hidden sm:inline'>Add</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </Html>
       )}
