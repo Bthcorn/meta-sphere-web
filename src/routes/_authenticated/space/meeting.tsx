@@ -18,6 +18,11 @@ import { FileTray } from '@/components/session/file-tray';
 import { useSessionInvites } from '@/hooks/useSessionInvites';
 import { useFriendRequestsRealtimeSync } from '@/hooks/useFriendRequestsRealtimeSync';
 import { FriendRequestToast } from '@/components/friend/friend-request-toast';
+import { useVoice } from '@/hooks/useVoice';
+import { useScreenShare } from '@/hooks/useScreenShare';
+import { ScreenShareOverlay } from '@/components/space/screenshare/screen-share-overlay';
+import { useScreenShareStore } from '@/store/screen-share.store';
+import { useAuthStore } from '@/store/auth.store';
 
 export const Route = createFileRoute('/_authenticated/space/meeting')({
   component: MeetingPage,
@@ -58,6 +63,13 @@ function MeetingPage() {
     if (chatOpen || whiteboardOpen || trayOpen) document.exitPointerLock();
   }, [chatOpen, whiteboardOpen, trayOpen]);
 
+  // Exit pointer lock when the screen share overlay opens
+  useEffect(() => {
+    if (screenStream && !screenMinimized) {
+      document.exitPointerLock();
+    }
+  }, [screenStream, screenMinimized]);
+
   // Guard: if pointer lock is somehow re-acquired while a panel is open, release it immediately
   useEffect(() => {
     if (!chatOpen && !whiteboardOpen && !trayOpen) return;
@@ -95,8 +107,19 @@ function MeetingPage() {
       />
       {whiteboardOpen && <WhiteboardPanel onClose={() => setWhiteboardOpen(false)} />}
 
+      {/* Screen share overlay */}
+      <ScreenShareOverlay onStop={() => toggleShare(username)} />
+
       {/* Voice controls at the bottom */}
-      <VoiceBar />
+      <VoiceBar
+        muted={muted}
+        toggleMute={toggleMute}
+        peers={peers}
+        connected={connected}
+        error={voiceError}
+        onToggleShare={() => toggleShare(username)}
+        sharing={sharing}
+      />
 
       {/* File tray — bottom right, left of whiteboard/chat toggles */}
       <FileTray sessionId={activeSession.id} />
@@ -108,7 +131,11 @@ function MeetingPage() {
       {import.meta.env.DEV && <PresenceDebug />}
 
       {/* 3-D meeting room — fills the whole viewport */}
-      <MeetingRoomScene lockEnabled={!whiteboardOpen && !chatOpen && !trayOpen} />
+      <MeetingRoomScene
+        lockEnabled={
+          !whiteboardOpen && !chatOpen && !trayOpen && !(screenStream && !screenMinimized)
+        }
+      />
     </div>
   );
 }

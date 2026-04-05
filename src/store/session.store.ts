@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Session, Participant } from '@/types/session';
 import type { ZoneKey, ZoneConfig } from '@/config/zone-sessions';
 
@@ -25,19 +26,28 @@ interface SessionState {
   exitArea: () => void;
 }
 
-export const useSessionStore = create<SessionState>()((set) => ({
-  activeSession: null,
-  currentZoneKey: null,
-  currentZoneConfig: null,
-  currentAreaZone: null,
-  participants: [],
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      activeSession: null,
+      currentZoneKey: null,
+      currentZoneConfig: null,
+      currentAreaZone: null,
+      participants: [],
 
-  setActiveSession: (s) => set({ activeSession: s }),
-  setParticipants: (p) => set({ participants: p }),
+      setActiveSession: (s) => set({ activeSession: s }),
+      setParticipants: (p) => set({ participants: p }),
 
-  enterZone: (key, config) => set({ currentZoneKey: key, currentZoneConfig: config }),
-  exitZone: () => set({ currentZoneKey: null, currentZoneConfig: null }),
+      enterZone: (key, config) => set({ currentZoneKey: key, currentZoneConfig: config }),
+      exitZone: () => set({ currentZoneKey: null, currentZoneConfig: null }),
 
-  enterArea: (config) => set({ currentAreaZone: config }),
-  exitArea: () => set({ currentAreaZone: null }),
-}));
+      enterArea: (config) => set({ currentAreaZone: config }),
+      exitArea: () => set({ currentAreaZone: null }),
+    }),
+    {
+      name: 'session-store',
+      // Only persist activeSession — zone/area/participant state is ephemeral
+      partialize: (s) => ({ activeSession: s.activeSession }),
+    }
+  )
+);

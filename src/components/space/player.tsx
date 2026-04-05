@@ -159,7 +159,7 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
         <PerspectiveCamera makeDefault position={[0, 0.75, 0]} fov={60} near={0.6} />
         {/* Unmount PointerLockControls while a zone panel is open so clicking
             the canvas doesn't accidentally re-lock the mouse. */}
-        {!currentZoneConfig && <SafePointerLockControls />}
+        {!currentZoneConfig && lockEnabled && <SafePointerLockControls />}
       </group>
       <group
         ref={avatarOrientationRef}
