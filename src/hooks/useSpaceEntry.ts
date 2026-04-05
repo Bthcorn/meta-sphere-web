@@ -3,7 +3,7 @@ import { Socket } from 'socket.io-client';
 import { socketManager } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth.store';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
-import { parseUserStatePayload } from '@/types/socket';
+import { parseUserStatePayload, parseUserAvatarPayload } from '@/types/socket';
 import { useSessionStore } from '@/store/session.store';
 
 function attachPresenceListeners(socket: Socket) {
@@ -11,6 +11,7 @@ function attachPresenceListeners(socket: Socket) {
   const addUser = useSpacePresenceStore.getState().addUser;
   const removeUser = useSpacePresenceStore.getState().removeUser;
   const updateUserPosition = useSpacePresenceStore.getState().updateUserPosition;
+  const updateUserAvatar = useSpacePresenceStore.getState().updateUserAvatar;
 
   const onSessionEnded = () => {
     useSessionStore.getState().setActiveSession(null);
@@ -30,13 +31,11 @@ function attachPresenceListeners(socket: Socket) {
     if (user) {
       addUser(user);
 
-      // A new participant just joined our room — immediately re-broadcast
-      // our own position so they can render our avatar without waiting for
-      // our next movement input.
-      const lastPosition = useSpacePresenceStore.getState().lastPosition;
-      if (lastPosition) {
-        socket.emit('update_position', lastPosition);
-      }
+      // A new participant just joined — re-broadcast our position and avatar
+      // so they can render us without waiting for our next input.
+      const { lastPosition, lastAvatar } = useSpacePresenceStore.getState();
+      if (lastPosition) socket.emit('update_position', lastPosition);
+      if (lastAvatar) socket.emit('update_avatar', lastAvatar);
     }
   };
 
@@ -50,11 +49,17 @@ function attachPresenceListeners(socket: Socket) {
     if (user) updateUserPosition(user);
   };
 
+  const onUserAvatarUpdated = (...args: unknown[]) => {
+    const payload = parseUserAvatarPayload(args[0]);
+    if (payload) updateUserAvatar(payload.userId, payload.avatar);
+  };
+
   socket.on('session:ended', onSessionEnded);
   socket.on('current_state', onCurrentState);
   socket.on('user_connected', onUserConnected);
   socket.on('user_disconnected', onUserDisconnected);
   socket.on('user_moved', onUserMoved);
+  socket.on('user_avatar_updated', onUserAvatarUpdated);
 
   return () => {
     socket.off('session:ended', onSessionEnded);
@@ -62,6 +67,7 @@ function attachPresenceListeners(socket: Socket) {
     socket.off('user_connected', onUserConnected);
     socket.off('user_disconnected', onUserDisconnected);
     socket.off('user_moved', onUserMoved);
+    socket.off('user_avatar_updated', onUserAvatarUpdated);
   };
 }
 

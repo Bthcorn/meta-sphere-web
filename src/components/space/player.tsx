@@ -73,6 +73,17 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
     }
   }, [currentZoneConfig]);
 
+  // Emit avatar appearance once on mount and whenever the user changes their look.
+  // Uses socketManager directly so it bypasses the position throttle.
+  useEffect(() => {
+    useSpacePresenceStore.getState().updateAvatar({
+      skinColor: skinTint,
+      shirtColorId,
+      glassesId,
+      hatId,
+    });
+  }, [skinTint, shirtColorId, glassesId, hatId]);
+
   // Pre-allocated per-instance temporaries to avoid GC pressure each frame
   const direction = new THREE.Vector3();
   const frontVector = new THREE.Vector3();
@@ -145,12 +156,6 @@ function PlayerMesh({ position = [-22.5, 5, 15], lockEnabled = true }: PlayerPro
       y: t.y,
       z: t.z,
       rotationY: rotationYRef.current,
-      avatar: {
-        skinColor: skinTint,
-        shirtColorId,
-        glassesId,
-        hatId,
-      },
     });
   });
 

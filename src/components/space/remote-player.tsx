@@ -132,11 +132,10 @@ export function RemotePlayers() {
 
   return (
     <>
-      {remoteUsers.map(({ userId, username, position }) => {
-        const av = position.avatar;
-        const skinColor = av?.skinColor ?? colorFromUsername(username);
-        const shirtColor = av?.shirtColorId
-          ? (SHIRT_COLOR_MAP[av.shirtColorId]?.color ?? shirtColorFromUsername(username))
+      {remoteUsers.map(({ userId, username, position, avatar }) => {
+        const skinColor = avatar.skinColor ?? colorFromUsername(username);
+        const shirtColor = avatar.shirtColorId
+          ? (SHIRT_COLOR_MAP[avatar.shirtColorId]?.color ?? shirtColorFromUsername(username))
           : shirtColorFromUsername(username);
         return (
           <RemotePlayer
@@ -145,8 +144,8 @@ export function RemotePlayers() {
             position={displayPosition(position)}
             color={skinColor}
             shirtColor={shirtColor}
-            glassesId={av?.glassesId ?? 'none'}
-            hatId={av?.hatId ?? 'none'}
+            glassesId={avatar.glassesId ?? 'none'}
+            hatId={avatar.hatId ?? 'none'}
             bobOffset={bobOffsetFromUsername(username)}
             rotationY={position.rotationY}
             speaking={speakingUserIds.has(String(userId))}

@@ -11,8 +11,6 @@ export interface Position {
   z: number;
   /** Y-axis rotation (yaw) in radians — the direction the avatar is facing. */
   rotationY?: number;
-  /** Grouped avatar appearance — piggybacked from update_position payload. */
-  avatar?: AvatarAppearance;
 }
 
 /** Matches `RealtimeGateway` / `docs/REALTIME_SPEC.md`. */
@@ -21,6 +19,13 @@ export interface UserStatePayload {
   username: string;
   roomId: string;
   position: Position;
+  avatar: AvatarAppearance;
+}
+
+/** Emitted by the server on `user_avatar_updated`. */
+export interface UserAvatarPayload {
+  userId: string;
+  avatar: AvatarAppearance;
 }
 
 /** Normalize server payloads (snake_case keys, numeric ids). */
@@ -45,9 +50,9 @@ export function parseUserStatePayload(raw: unknown): UserStatePayload | null {
       ? Number(rotationYRaw)
       : undefined;
 
-  let avatar: AvatarAppearance | undefined;
-  if (p.avatar && typeof p.avatar === 'object') {
-    const a = p.avatar as Record<string, unknown>;
+  let avatar: AvatarAppearance = {};
+  if (o.avatar && typeof o.avatar === 'object') {
+    const a = o.avatar as Record<string, unknown>;
     avatar = {
       skinColor: typeof a.skinColor === 'string' ? a.skinColor : undefined,
       shirtColorId: typeof a.shirtColorId === 'string' ? a.shirtColorId : undefined,
@@ -56,5 +61,24 @@ export function parseUserStatePayload(raw: unknown): UserStatePayload | null {
     };
   }
 
-  return { userId: String(id), username, roomId, position: { x, y, z, rotationY, avatar } };
+  return { userId: String(id), username, roomId, position: { x, y, z, rotationY }, avatar };
+}
+
+export function parseUserAvatarPayload(raw: unknown): UserAvatarPayload | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.userId ?? o.user_id;
+  if (id === undefined || id === null) return null;
+  const avatarRaw = o.avatar;
+  if (!avatarRaw || typeof avatarRaw !== 'object') return null;
+  const a = avatarRaw as Record<string, unknown>;
+  return {
+    userId: String(id),
+    avatar: {
+      skinColor: typeof a.skinColor === 'string' ? a.skinColor : undefined,
+      shirtColorId: typeof a.shirtColorId === 'string' ? a.shirtColorId : undefined,
+      glassesId: typeof a.glassesId === 'string' ? a.glassesId : undefined,
+      hatId: typeof a.hatId === 'string' ? a.hatId : undefined,
+    },
+  };
 }
