@@ -22,8 +22,10 @@ export const sessionsApi = {
 
   end: (id: string) => api.post<Session>(`/api/sessions/${id}/end`).then((r) => r.data),
 
-  join: (id: string, password?: string) =>
-    api.post<{ message: string }>(`/api/sessions/${id}/join`, { password }).then((r) => r.data),
+  join: (id: string, password?: string, inviteToken?: string) =>
+    api
+      .post<{ message: string }>(`/api/sessions/${id}/join`, { password, inviteToken })
+      .then((r) => r.data),
 
   leave: (id: string) =>
     api.post<{ message: string }>(`/api/sessions/${id}/leave`).then((r) => r.data),

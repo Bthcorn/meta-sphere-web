@@ -71,8 +71,8 @@ export function useSession() {
   });
 
   const _join = useCallback(
-    async (sessionId: string, password?: string) => {
-      await sessionsApi.join(sessionId, password);
+    async (sessionId: string, password?: string, inviteToken?: string) => {
+      await sessionsApi.join(sessionId, password, inviteToken);
 
       // Pre-populate participants cache before setActiveSession to avoid a loading flash
       const [session, initialParticipants] = await Promise.all([
@@ -111,8 +111,15 @@ export function useSession() {
   });
 
   const joinSession = useMutation({
-    mutationFn: ({ sessionId, password }: { sessionId: string; password?: string }) =>
-      _join(sessionId, password),
+    mutationFn: ({
+      sessionId,
+      password,
+      inviteToken,
+    }: {
+      sessionId: string;
+      password?: string;
+      inviteToken?: string;
+    }) => _join(sessionId, password, inviteToken),
   });
 
   const leaveSession = useMutation({
