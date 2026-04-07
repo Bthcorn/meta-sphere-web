@@ -4,6 +4,7 @@ import { sessionsApi } from '@/api/sessions.api';
 import { useSessionStore } from '@/store/session.store';
 import { useSpacePresenceStore } from '@/store/space-presence.store';
 import { socketManager } from '@/lib/socket-manager';
+import { useScreenShareStore } from '@/store/screen-share.store';
 import type { CreateSessionDto } from '@/types/session';
 
 export function useSession() {
@@ -13,30 +14,21 @@ export function useSession() {
   const roomId = currentZoneConfig?.roomId ?? null;
   const mode = currentZoneConfig?.mode ?? null;
 
-  // ── Invalidate participants immediately on socket events ─────────────────
+  // Invalidate queries on socket events
   useEffect(() => {
     if (!activeSession) return;
-
     const socket = socketManager.instance;
     if (!socket) return;
 
-    const invalidateParticipants = () => {
-      if (activeSession) {
-        qc.invalidateQueries({ queryKey: ['sessions', 'participants', activeSession.id] });
-      }
-    };
-
+    const invalidateParticipants = () =>
+      qc.invalidateQueries({ queryKey: ['sessions', 'participants', activeSession.id] });
     const invalidateSessionList = () => {
       qc.invalidateQueries({ queryKey: ['sessions', 'list', roomId] });
       qc.invalidateQueries({ queryKey: ['sessions', 'single', roomId] });
     };
 
-    // The backend emits user_connected / user_disconnected to the session room
-    // whenever a participant joins or leaves (via switchUserRoom), so these
-    // events cover both initial socket connections and session room switches.
     socket.on('user_connected', invalidateParticipants);
     socket.on('user_disconnected', invalidateParticipants);
-    // If your backend emits these on session state changes:
     socket.on('session:started', invalidateSessionList);
     socket.on('session:ended', invalidateSessionList);
 
@@ -48,7 +40,6 @@ export function useSession() {
     };
   }, [activeSession, qc, roomId]);
 
-  // ── Session list (multi mode) ────────────────────────────────────────────
   const { data: sessionList = [], isLoading: listLoading } = useQuery({
     queryKey: ['sessions', 'list', roomId],
     queryFn: () =>
@@ -60,7 +51,6 @@ export function useSession() {
     staleTime: 10_000,
   });
 
-  // ── Single active session (single mode) ──────────────────────────────────
   const { data: singleSession = null, isLoading: singleLoading } = useQuery({
     queryKey: ['sessions', 'single', roomId],
     queryFn: () =>
@@ -72,7 +62,6 @@ export function useSession() {
     staleTime: 10_000,
   });
 
-  // ── Participants ─────────────────────────────────────────────────────────
   const { data: participants = [] } = useQuery({
     queryKey: ['sessions', 'participants', activeSession?.id],
     queryFn: () => sessionsApi.getParticipants(activeSession!.id),
@@ -81,35 +70,24 @@ export function useSession() {
     select: (data) => data.filter((p) => p.status === 'ACTIVE'),
   });
 
-  // ── Core join ────────────────────────────────────────────────────────────
   const _join = useCallback(
-    async (sessionId: string, password?: string) => {
-      await sessionsApi.join(sessionId, password);
+    async (sessionId: string, password?: string, inviteToken?: string) => {
+      await sessionsApi.join(sessionId, password, inviteToken);
 
-      // Fetch session + participants in parallel.
-      // Pre-populate the participants cache BEFORE setActiveSession so that
-      // when SessionHUD mounts the data is already there and renders instantly.
+      // Pre-populate participants cache before setActiveSession to avoid a loading flash
       const [session, initialParticipants] = await Promise.all([
         sessionsApi.get(sessionId),
         sessionsApi.getParticipants(sessionId),
       ]);
       qc.setQueryData(['sessions', 'participants', session.id], initialParticipants);
-
       setActiveSession(session);
 
       const socket = socketManager.instance;
       if (socket?.connected) {
-        // Re-broadcast our own position so other session members see our avatar
-        // without waiting for our next movement input.
         const lastPosition = useSpacePresenceStore.getState().lastPosition;
-        if (lastPosition) {
-          socket.emit('update_position', lastPosition);
-        }
+        if (lastPosition) socket.emit('update_position', lastPosition);
 
-        // Request a fresh presence snapshot after a short delay to allow the
-        // backend's switchUserRoom to complete before we ask for state.
-        // Without this delay, request_state races with switchUserRoom and can
-        // return the old room's snapshot instead of the session room's.
+        // Delay request_state so switchUserRoom completes first
         setTimeout(() => {
           if (socket.connected) socket.emit('request_state');
         }, 300);
@@ -120,7 +98,6 @@ export function useSession() {
     [qc, setActiveSession]
   );
 
-  // ── Mutations ────────────────────────────────────────────────────────────
   const createAndJoin = useMutation({
     mutationFn: async (dto: Omit<CreateSessionDto, 'roomId' | 'type'> & { title: string }) => {
       const session = await sessionsApi.create({
@@ -134,13 +111,21 @@ export function useSession() {
   });
 
   const joinSession = useMutation({
-    mutationFn: ({ sessionId, password }: { sessionId: string; password?: string }) =>
-      _join(sessionId, password),
+    mutationFn: ({
+      sessionId,
+      password,
+      inviteToken,
+    }: {
+      sessionId: string;
+      password?: string;
+      inviteToken?: string;
+    }) => _join(sessionId, password, inviteToken),
   });
 
   const leaveSession = useMutation({
     mutationFn: () => sessionsApi.leave(activeSession!.id),
     onSuccess: () => {
+      useScreenShareStore.getState().clearStream();
       setActiveSession(null);
       qc.invalidateQueries({ queryKey: ['sessions'] });
     },
@@ -157,6 +142,7 @@ export function useSession() {
   const endSession = useMutation({
     mutationFn: (id: string) => sessionsApi.end(id),
     onSuccess: () => {
+      useScreenShareStore.getState().clearStream();
       setActiveSession(null);
       qc.invalidateQueries({ queryKey: ['sessions'] });
     },

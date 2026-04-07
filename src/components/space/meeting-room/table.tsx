@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 import type { GLTF } from 'three-stdlib';
@@ -23,6 +24,13 @@ type TableProps = {
 export function Table({ position, rotation, scale = 1 }: TableProps) {
   const { nodes, materials } = useGLTF('/meeting_room.glb') as unknown as GLTFResult;
 
+  // Clone the material to safely apply the new color
+  const darkBrownMaterial = useMemo(() => {
+    const mat = materials.Table.clone();
+    mat.color.set('#3E2723'); // A rich, deep dark brown hex code
+    return mat;
+  }, [materials.Table]);
+
   return (
     <RigidBody
       type='fixed'
@@ -33,10 +41,9 @@ export function Table({ position, rotation, scale = 1 }: TableProps) {
     >
       <group>
         {/* --- THE TABLE TOP --- */}
-        {/* Re-added the hardcoded baked position and scale from the GLB */}
         <mesh
           geometry={nodes.pCube74_Table_0.geometry}
-          material={materials.Table}
+          material={darkBrownMaterial}
           position={[1.446, 4.94, 26.146]}
           scale={[15.939, 6.326, 27.756]}
         />
@@ -44,13 +51,13 @@ export function Table({ position, rotation, scale = 1 }: TableProps) {
         {/* --- THE LEGS --- */}
         <mesh
           geometry={nodes.pCube77_Table_0.geometry}
-          material={materials.Table}
+          material={darkBrownMaterial}
           position={[1.182, 7.482, 36.735]}
           scale={0.598}
         />
         <mesh
           geometry={nodes.pCube78_Table_0.geometry}
-          material={materials.Table}
+          material={darkBrownMaterial}
           position={[1.182, 7.482, 15.429]}
           scale={0.598}
         />

@@ -1,10 +1,30 @@
-import { useVoice } from '@/hooks/useVoice';
+import type { PeerState } from '@/hooks/useVoice';
 import { useSessionStore } from '@/store/session.store';
 import { useAuthStore } from '@/store/auth.store';
-import { MicIcon, MicOffIcon, Volume2Icon } from 'lucide-react';
+import { MicIcon, MicOffIcon, Volume2Icon, Monitor } from 'lucide-react';
+import { useScreenShareStore } from '@/store/screen-share.store';
 
-export function VoiceBar() {
-  const { muted, toggleMute, peers, connected, error } = useVoice();
+interface VoiceBarProps {
+  muted: boolean;
+  toggleMute: () => void;
+  peers: PeerState[];
+  connected: boolean;
+  error: string | null;
+  onToggleShare?: () => void;
+  sharing?: boolean;
+}
+
+export function VoiceBar({
+  muted,
+  toggleMute,
+  peers,
+  connected,
+  error,
+  onToggleShare,
+  sharing,
+}: VoiceBarProps) {
+  const { stream, isLocal } = useScreenShareStore();
+  const anotherIsSharing = stream !== null && !isLocal;
   const { participants, activeSession, currentAreaZone } = useSessionStore();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
@@ -124,6 +144,30 @@ export function VoiceBar() {
       >
         {muted ? <MicOffIcon className='size-3.5' /> : <MicIcon className='size-3.5' />}
       </button>
+
+      {onToggleShare && (
+        <button
+          onClick={onToggleShare}
+          disabled={anotherIsSharing}
+          title={
+            anotherIsSharing
+              ? 'Another participant is sharing'
+              : sharing
+                ? 'Stop screen share'
+                : 'Share your screen'
+          }
+          className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200
+            ${
+              anotherIsSharing
+                ? 'cursor-not-allowed opacity-30 bg-white/5 text-white/30'
+                : sharing
+                  ? 'bg-blue-500/30 text-blue-400 ring-1 ring-blue-500/50'
+                  : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+            }`}
+        >
+          <Monitor size={14} />
+        </button>
+      )}
     </div>
   );
 }

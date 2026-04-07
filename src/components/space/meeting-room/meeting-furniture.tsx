@@ -2,11 +2,17 @@ import type { ThreeElements } from '@react-three/fiber';
 import { Chair } from './chair';
 import { Table } from './table';
 import { Laptop } from './laptop';
-import { Screen } from './screen';
+import { Model as Screen } from './screen';
+import { Plant } from './Plant';
+import { Model as Whiteboard } from './Whiteboard';
+// --- IMPORT THE CLOCK ---
+import { Model as Clock } from './Clock';
 
-type MeetingFurnitureProps = ThreeElements['group'];
+type MeetingFurnitureProps = ThreeElements['group'] & {
+  room?: 'A' | 'B';
+};
 
-export function MeetingFurniture(props: MeetingFurnitureProps) {
+export function MeetingFurniture({ room = 'A', ...props }: MeetingFurnitureProps) {
   const s = 0.15;
 
   const centerX = -0.13;
@@ -20,9 +26,27 @@ export function MeetingFurniture(props: MeetingFurnitureProps) {
 
   return (
     <group {...props}>
-      {/* --- NEW PRESENTATION SCREEN --- */}
-      {/* Mounted perfectly on the back wall */}
+      {/* --- PRESENTATION SCREEN & BIAS LIGHTS --- */}
       <Screen position={[0, 4.5, -8.5]} />
+
+      {/* --- CLOCK --- */}
+      {/* Positioned high on the wall opposite the screen (z = 7.4) */}
+      {/* Rotated Math.PI to face the table */}
+      <Clock position={[0, 5, 8.4]} scale={0.05} rotation={[0, Math.PI / 2, 0]} />
+
+      {/* --- DYNAMIC PLANT PLACEMENT --- */}
+      {room === 'A' ? (
+        <Plant position={[-4, 0, 8]} scale={0.25} />
+      ) : (
+        <Plant position={[4, 0, 8]} scale={0.25} />
+      )}
+
+      {/* --- WHITEBOARD --- */}
+      {room === 'A' ? (
+        <Whiteboard position={[-4.5, 3, 0]} rotation={[-Math.PI, 0, -Math.PI / 2]} scale={1.75} />
+      ) : (
+        <Whiteboard position={[4.5, 3, 0]} rotation={[-Math.PI, 0, Math.PI / 2]} scale={1.75} />
+      )}
 
       {/* Table */}
       <Table position={[centerX, 0, centerZ]} scale={s} />
