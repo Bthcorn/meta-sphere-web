@@ -112,7 +112,7 @@ describe('useSessionFiles', () => {
       const { Wrapper } = createWrapper();
       renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
 
-      const events = mockSocket.on.mock.calls.map(([e]: [string]) => e);
+      const events = mockSocket.on.mock.calls.map((args) => args[0] as string);
       expect(events).toContain('session:file_shared');
       expect(events).toContain('session:file_removed');
       expect(events).toContain('session:tray_cleared');
@@ -123,7 +123,7 @@ describe('useSessionFiles', () => {
       const { unmount } = renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
       unmount();
 
-      const events = mockSocket.off.mock.calls.map(([e]: [string]) => e);
+      const events = mockSocket.off.mock.calls.map((args) => args[0] as string);
       expect(events).toContain('session:file_shared');
       expect(events).toContain('session:file_removed');
       expect(events).toContain('session:tray_cleared');
@@ -134,7 +134,7 @@ describe('useSessionFiles', () => {
       renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'session:file_shared'
+        (args) => args[0] === 'session:file_shared'
       )![1] as (f: ReturnType<typeof makeFile>) => void;
 
       act(() => handler(makeFile('f-new')));
@@ -150,7 +150,7 @@ describe('useSessionFiles', () => {
       renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'session:file_removed'
+        (args) => args[0] === 'session:file_removed'
       )![1] as (payload: { fileId: string }) => void;
 
       act(() => handler({ fileId: 'f1' }));
@@ -164,7 +164,7 @@ describe('useSessionFiles', () => {
       renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'session:tray_cleared'
+        (args) => args[0] === 'session:tray_cleared'
       )![1] as (payload: { sessionId: string }) => void;
 
       act(() => handler({ sessionId: 'sess-1' }));
@@ -178,7 +178,7 @@ describe('useSessionFiles', () => {
       renderHook(() => useSessionFiles('sess-1'), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'session:tray_cleared'
+        (args) => args[0] === 'session:tray_cleared'
       )![1] as (payload: { sessionId: string }) => void;
 
       act(() => handler({ sessionId: 'sess-OTHER' }));

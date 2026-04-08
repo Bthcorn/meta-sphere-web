@@ -23,8 +23,13 @@ describe('useSessionInvites', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useSessionInviteStore).mockImplementation(
-      (selector: (s: { addInvite: typeof mockAddInvite }) => unknown) =>
-        selector({ addInvite: mockAddInvite })
+      (
+        selector: (s: {
+          addInvite: typeof mockAddInvite;
+          pendingInvites: never[];
+          dismissInvite: () => void;
+        }) => unknown
+      ) => selector({ addInvite: mockAddInvite, pendingInvites: [], dismissInvite: vi.fn() })
     );
   });
 
@@ -43,9 +48,7 @@ describe('useSessionInvites', () => {
     renderHook(() => useSessionInvites());
 
     // Grab the handler registered with socket.on
-    const [, handler] = mockSocket.on.mock.calls.find(
-      ([event]: [string]) => event === 'session_invitation'
-    )!;
+    const [, handler] = mockSocket.on.mock.calls.find((args) => args[0] === 'session_invitation')!;
 
     const invite: SessionInvite = {
       sessionId: 'sess-1',
@@ -66,8 +69,8 @@ describe('useSessionInvites', () => {
     unmount();
 
     // Both on and off should have been called exactly once with the same event name
-    const onCall = mockSocket.on.mock.calls.find(([e]: [string]) => e === 'session_invitation');
-    const offCall = mockSocket.off.mock.calls.find(([e]: [string]) => e === 'session_invitation');
+    const onCall = mockSocket.on.mock.calls.find((args) => args[0] === 'session_invitation');
+    const offCall = mockSocket.off.mock.calls.find((args) => args[0] === 'session_invitation');
 
     expect(onCall).toBeDefined();
     expect(offCall).toBeDefined();

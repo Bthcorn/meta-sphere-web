@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { AxiosProgressEvent } from 'axios';
 import { filesApi } from '../files.api';
 import { api } from '@/lib/api';
 
@@ -88,7 +89,7 @@ describe('filesApi', () => {
     it('calls onProgress callback with 0-100 values', async () => {
       const onProgress = vi.fn();
       mockPost.mockImplementationOnce((_url, _data, config) => {
-        config?.onUploadProgress?.({ loaded: 50, total: 100 } as ProgressEvent);
+        config?.onUploadProgress?.({ loaded: 50, total: 100, bytes: 50 } as AxiosProgressEvent);
         return Promise.resolve({ data: mockFileEntity });
       });
 
@@ -100,7 +101,7 @@ describe('filesApi', () => {
     it('does not call onProgress when total is unavailable', async () => {
       const onProgress = vi.fn();
       mockPost.mockImplementationOnce((_url, _data, config) => {
-        config?.onUploadProgress?.({ loaded: 50, total: 0 } as ProgressEvent);
+        config?.onUploadProgress?.({ loaded: 50, total: 0, bytes: 50 } as AxiosProgressEvent);
         return Promise.resolve({ data: mockFileEntity });
       });
 

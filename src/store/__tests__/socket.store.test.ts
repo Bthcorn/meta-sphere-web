@@ -24,7 +24,7 @@ vi.mock('@/lib/socket', () => ({
 
 /** Helper: grab the handler registered for a given socket event. */
 function captureHandler(event: string): (...args: unknown[]) => void {
-  const call = mockSocket.on.mock.calls.find(([e]: [string]) => e === event);
+  const call = mockSocket.on.mock.calls.find((args) => args[0] === event);
   if (!call) throw new Error(`No handler registered for event "${event}"`);
   return call[1] as (...args: unknown[]) => void;
 }
@@ -62,7 +62,7 @@ describe('useSocketStore', () => {
 
     it('registers connect, disconnect, and connect_error handlers on the socket', () => {
       useSocketStore.getState().connect('my-token');
-      const events = mockSocket.on.mock.calls.map(([e]: [string]) => e);
+      const events = mockSocket.on.mock.calls.map((args) => args[0] as string);
       expect(events).toContain('connect');
       expect(events).toContain('disconnect');
       expect(events).toContain('connect_error');
@@ -139,7 +139,7 @@ describe('useSocketStore', () => {
       vi.clearAllMocks(); // reset call counts
       useSocketStore.getState().disconnect();
       // off should be called for connect, disconnect, connect_error
-      const offEvents = mockSocket.off.mock.calls.map(([e]: [string]) => e);
+      const offEvents = mockSocket.off.mock.calls.map((args) => args[0] as string);
       expect(offEvents).toContain('connect');
       expect(offEvents).toContain('disconnect');
       expect(offEvents).toContain('connect_error');

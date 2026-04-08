@@ -118,7 +118,7 @@ describe('useAuth', () => {
   // ── register ───────────────────────────────────────────────────────────────
 
   it('calls authApi.register with the provided data', async () => {
-    mockRegister.mockResolvedValueOnce({ access_token: 'tok', user: { id: '2', username: 'bob' } });
+    mockRegister.mockResolvedValueOnce({ message: 'registered' });
     const { Wrapper } = createWrapper();
 
     const { result } = renderHook(() => useAuth(), { wrapper: Wrapper });
@@ -147,7 +147,7 @@ describe('useAuth', () => {
       user: { id: '1', username: 'alice' },
       isAuthenticated: true,
     });
-    mockLogout.mockResolvedValueOnce(undefined);
+    mockLogout.mockResolvedValueOnce({ message: 'ok' });
     const { Wrapper } = createWrapper();
 
     const { result } = renderHook(() => useAuth(), { wrapper: Wrapper });
@@ -162,7 +162,7 @@ describe('useAuth', () => {
   });
 
   it('navigates to a custom redirect path after logout', async () => {
-    mockLogout.mockResolvedValueOnce(undefined);
+    mockLogout.mockResolvedValueOnce({ message: 'ok' });
     const { Wrapper } = createWrapper();
 
     const { result } = renderHook(() => useAuth(), { wrapper: Wrapper });

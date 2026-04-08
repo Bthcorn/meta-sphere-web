@@ -188,7 +188,7 @@ describe('useChat', () => {
     it('registers chat:message, chat:typing, chat:reaction listeners', () => {
       const { Wrapper } = createWrapper();
       renderHook(() => useChat(), { wrapper: Wrapper });
-      const events = mockSocket.on.mock.calls.map(([e]: [string]) => e);
+      const events = mockSocket.on.mock.calls.map((args) => args[0] as string);
       expect(events).toContain('chat:message');
       expect(events).toContain('chat:typing');
       expect(events).toContain('chat:reaction');
@@ -198,7 +198,7 @@ describe('useChat', () => {
       const { Wrapper } = createWrapper();
       const { unmount } = renderHook(() => useChat(), { wrapper: Wrapper });
       unmount();
-      const events = mockSocket.off.mock.calls.map(([e]: [string]) => e);
+      const events = mockSocket.off.mock.calls.map((args) => args[0] as string);
       expect(events).toContain('chat:message');
       expect(events).toContain('chat:typing');
       expect(events).toContain('chat:reaction');
@@ -208,9 +208,9 @@ describe('useChat', () => {
       const { Wrapper } = createWrapper();
       renderHook(() => useChat(), { wrapper: Wrapper });
 
-      const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'chat:message'
-      )![1] as (m: ReturnType<typeof makeMessage>) => void;
+      const handler = mockSocket.on.mock.calls.find((args) => args[0] === 'chat:message')![1] as (
+        m: ReturnType<typeof makeMessage>
+      ) => void;
 
       act(() => handler(makeMessage({ id: 'msg-new', roomId: 'room-chilling' })));
 
@@ -224,7 +224,7 @@ describe('useChat', () => {
       renderHook(() => useChat(), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'chat:typing'
+        (args) => args[0] === 'chat:typing'
       )![1] as (u: { userId: string; username: string; isTyping: boolean }) => void;
 
       act(() => handler({ userId: 'user-2', username: 'bob', isTyping: true }));
@@ -244,7 +244,7 @@ describe('useChat', () => {
       renderHook(() => useChat(), { wrapper: Wrapper });
 
       const handler = mockSocket.on.mock.calls.find(
-        ([e]: [string]) => e === 'chat:reaction'
+        (args) => args[0] === 'chat:reaction'
       )![1] as (r: { messageId: string; reactions: Record<string, string[]> }) => void;
 
       act(() => handler({ messageId: 'msg-1', reactions: { '👍': ['user-1'] } }));
