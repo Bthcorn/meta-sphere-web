@@ -1,73 +1,110 @@
-# React + TypeScript + Vite
+# Metasphere
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A virtual co-working platform that brings remote teams together in a shared 3D campus. Move your avatar around, see who's online, drop into meeting rooms, and collaborate in real time — no scheduling required.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **3D Virtual Campus** — Navigate a persistent shared space with a common room and library zone using WASD controls
+- **Avatar Customization** — Personalize skin color, shirt, glasses, and hat
+- **Meeting Rooms** — Dedicated spaces with voice chat, a collaborative whiteboard, screen sharing, and file sharing
+- **Real-time Chat** — Zone and session-scoped messaging with typing indicators and reactions
+- **Spatial Audio** — Voice volume adjusts based on avatar proximity via LiveKit
+- **Friends & Presence** — Friend requests, online/offline status, and live session invites
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Category      | Libraries                           |
+| ------------- | ----------------------------------- |
+| Framework     | React 19, TypeScript, Vite          |
+| Routing       | TanStack Router (file-based)        |
+| 3D / Physics  | Three.js, React Three Fiber, Rapier |
+| Real-time     | Socket.io, LiveKit                  |
+| State         | Zustand                             |
+| Data Fetching | TanStack Query, Axios               |
+| Forms         | React Hook Form, Zod                |
+| Styling       | Tailwind CSS v4, shadcn/ui          |
+| Testing       | Vitest, Testing Library             |
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+
+- pnpm
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Copy `.env.example` to `.env` and fill in the required values:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
+```
+
+### Development
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+### Build
+
+```bash
+pnpm build
+```
+
+### Preview Production Build
+
+```bash
+pnpm preview
+```
+
+## Testing
+
+```bash
+# Run tests in watch mode
+pnpm test
+
+# Run tests once
+pnpm test:run
+
+# Run with coverage
+pnpm test:coverage
+
+# Open Vitest UI
+pnpm test:ui
+```
+
+## Project Structure
+
+```
+src/
+├── api/          # API client functions
+├── components/   # UI and 3D scene components
+│   ├── meta-sphere-3d/   # 3D scene (avatars, particles, connections)
+│   ├── space/            # Campus and zone scenes
+│   ├── whiteboard/       # Collaborative whiteboard
+│   ├── chat/             # Chat UI
+│   ├── friend/           # Friends panel
+│   └── avatar/           # Avatar customization
+├── hooks/        # Custom React hooks
+├── lib/          # Utility functions
+├── routes/       # File-based routes (TanStack Router)
+├── store/        # Zustand stores
+└── types/        # TypeScript types
+```
+
+## Code Quality
+
+Linting and formatting run automatically on staged files via Husky + lint-staged:
+
+```bash
+pnpm lint
 ```
